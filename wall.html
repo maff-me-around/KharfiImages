@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WALL</title>
-<script src="https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;700&display=swap" rel="stylesheet">
 <style>
   :root { --pink:#ff2060; --dark:#05050a; }
@@ -146,28 +146,32 @@ function saveConfig() {
 }
 
 function startWall(dbUrl) {
-  // QR code — punta alla camera page con lo stesso host
   var base = location.href.replace(/wall\.html.*$/, '');
   var cameraUrl = base + 'camera.html?db=' + encodeURIComponent(dbUrl);
-  var canvas = document.getElementById('qr-canvas');
+  generateQR(cameraUrl);
+  listenPhotos(dbUrl);
+}
 
-  QRCode.toCanvas(canvas, cameraUrl, {
-    width: 200,
-    margin: 2,
+function generateQR(url) {
+  // Riprova finché la libreria non è caricata
+  if (typeof QRCode === 'undefined') {
+    setTimeout(function() { generateQR(url); }, 100);
+    return;
+  }
+  var canvas = document.getElementById('qr-canvas');
+  QRCode.toCanvas(canvas, url, {
+    width: 200, margin: 2,
     color: { dark: '#000000', light: '#ffffff' }
   }, function(err) {
     if (err) {
-      console.error('QR error:', err);
-      // Fallback testo
+      // Fallback: API esterna
       canvas.style.display = 'none';
-      var fb = document.createElement('p');
-      fb.style.cssText = 'font-size:10px;word-break:break-all;max-width:200px;color:#000;';
-      fb.textContent = cameraUrl;
-      canvas.parentNode.insertBefore(fb, canvas.nextSibling);
+      var img = document.createElement('img');
+      img.width = 200; img.height = 200;
+      img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(url);
+      canvas.parentNode.insertBefore(img, canvas);
     }
   });
-
-  listenPhotos(dbUrl);
 }
 
 // ── FIREBASE POLLING ──────────────────────────────
