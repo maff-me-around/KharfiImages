@@ -95,11 +95,9 @@
   .cfg-btn {
     padding:14px 40px; background:var(--pink); border:none; border-radius:6px;
     color:#fff; font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:0.15em;
-    cursor:pointer; transition:opacity 0.2s;
+    cursor:pointer;
   }
-  .cfg-btn:hover { opacity:0.85; }
   .cfg-link { font-size:11px; color:rgba(255,255,255,0.2); text-align:center; line-height:1.8; }
-  .cfg-link a { color:rgba(255,32,96,0.6); }
 </style>
 </head>
 <body>
@@ -110,9 +108,7 @@
   <div class="cfg-sub">Incolla qui il tuo Firebase Database URL<br>(lo trovi nel pannello Firebase → Realtime Database)</div>
   <input class="cfg-input" id="db-url-input" placeholder="https://tuo-progetto-default-rtdb.firebaseio.com" type="url">
   <button class="cfg-btn" onclick="saveConfig()">AVVIA WALL</button>
-  <div class="cfg-link">
-    Non sai dove trovarlo? Segui le istruzioni nel file <strong>SETUP.txt</strong>
-  </div>
+  <div class="cfg-link">Non sai dove trovarlo? Segui le istruzioni nel file <strong>SETUP.txt</strong></div>
 </div>
 
 <!-- WAIT -->
@@ -129,102 +125,114 @@
 <div id="flash"></div>
 <div id="counter">Foto &nbsp;<b id="count">0</b></div>
 
-<script type="module">
+<script>
 // ── CONFIG ────────────────────────────────────────
 const PHOTO_LIFE    = 22000;
 const MAX_ON_SCREEN = 16;
 
-let dbUrl = localStorage.getItem('dj_db_url');
-if (dbUrl) startWall(dbUrl);
+// Avvio automatico se già configurato
+var _dbUrl = localStorage.getItem('dj_db_url');
+if (_dbUrl) {
+  document.getElementById('config-overlay').classList.add('hidden');
+  startWall(_dbUrl);
+}
 
-window.saveConfig = function() {
-  const val = document.getElementById('db-url-input').value.trim().replace(/\/$/, '');
+function saveConfig() {
+  var val = document.getElementById('db-url-input').value.trim().replace(/\/$/, '');
   if (!val.startsWith('https://')) { alert('URL non valido'); return; }
   localStorage.setItem('dj_db_url', val);
   document.getElementById('config-overlay').classList.add('hidden');
   startWall(val);
-};
+}
 
 function startWall(dbUrl) {
-  document.getElementById('config-overlay').classList.add('hidden');
-
   // QR code — punta alla camera page con lo stesso host
-  const base = location.href.replace(/wall\.html.*$/, '');
-  const cameraUrl = `${base}camera.html?db=${encodeURIComponent(dbUrl)}`;
-  QRCode.toCanvas(document.getElementById('qr-canvas'), cameraUrl, {
-    width:200, margin:1, color:{dark:'#000',light:'#fff'}
+  var base = location.href.replace(/wall\.html.*$/, '');
+  var cameraUrl = base + 'camera.html?db=' + encodeURIComponent(dbUrl);
+  var canvas = document.getElementById('qr-canvas');
+
+  QRCode.toCanvas(canvas, cameraUrl, {
+    width: 200,
+    margin: 2,
+    color: { dark: '#000000', light: '#ffffff' }
+  }, function(err) {
+    if (err) {
+      console.error('QR error:', err);
+      // Fallback testo
+      canvas.style.display = 'none';
+      var fb = document.createElement('p');
+      fb.style.cssText = 'font-size:10px;word-break:break-all;max-width:200px;color:#000;';
+      fb.textContent = cameraUrl;
+      canvas.parentNode.insertBefore(fb, canvas.nextSibling);
+    }
   });
 
-  // Firebase REST streaming (SSE) — nessuna libreria necessaria
   listenPhotos(dbUrl);
 }
 
-// ── FIREBASE REST ─────────────────────────────────
-let seenKeys = new Set();
-let total = 0;
-let firstPhoto = true;
+// ── FIREBASE POLLING ──────────────────────────────
+var seenKeys = {};
+var total = 0;
+var firstPhoto = true;
 
 function listenPhotos(dbUrl) {
-  // Usa SSE di Firebase per ricevere aggiornamenti in tempo reale
-  const url = `${dbUrl}/photos.json?orderBy="ts"&limitToLast=1`;
-  
-  // Polling ogni 1.5s (semplice e affidabile)
-  setInterval(async () => {
-    try {
-      const res = await fetch(`${dbUrl}/photos.json?orderBy="ts"&limitToLast=20`);
-      const data = await res.json();
-      if (!data) return;
-      Object.entries(data).forEach(([key, val]) => {
-        if (!seenKeys.has(key)) {
-          seenKeys.add(key);
-          addPhoto(val.dataUrl);
-          // Cancella dal db dopo aver ricevuto (opzionale, mantiene il db leggero)
-          fetch(`${dbUrl}/photos/${key}.json`, { method:'DELETE' });
-        }
-      });
-    } catch(e) { /* silenzioso */ }
+  setInterval(function() {
+    fetch(dbUrl + '/photos.json?orderBy="ts"&limitToLast=20')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (!data) return;
+        Object.keys(data).forEach(function(key) {
+          if (!seenKeys[key]) {
+            seenKeys[key] = true;
+            addPhoto(data[key].dataUrl);
+            fetch(dbUrl + '/photos/' + key + '.json', { method: 'DELETE' });
+          }
+        });
+      })
+      .catch(function() {});
   }, 1500);
 }
 
 // ── PHOTO WALL ────────────────────────────────────
-const wall    = document.getElementById('wall');
-const waitEl  = document.getElementById('wait-screen');
-const countEl = document.getElementById('count');
-const flashEl = document.getElementById('flash');
+var wall    = document.getElementById('wall');
+var waitEl  = document.getElementById('wait-screen');
+var countEl = document.getElementById('count');
+var flashEl = document.getElementById('flash');
 
 function addPhoto(dataUrl) {
   if (!dataUrl) return;
   if (firstPhoto) { waitEl.classList.add('hidden'); firstPhoto = false; }
 
   flashEl.classList.add('on');
-  setTimeout(() => flashEl.classList.remove('on'), 120);
+  setTimeout(function() { flashEl.classList.remove('on'); }, 120);
 
-  const alive = wall.querySelectorAll('.photo-card:not(.dying)');
+  var alive = wall.querySelectorAll('.photo-card:not(.dying)');
   if (alive.length >= MAX_ON_SCREEN) killCard(alive[0]);
 
-  const W = window.innerWidth, H = window.innerHeight;
-  const w = Math.round(Math.random() * 110 + 155);
-  const h = Math.round(w * (Math.random() * 0.25 + 1.15));
-  const x = Math.random() * (W - w - 16) + 8;
-  const y = Math.random() * (H - h - 16) + 8;
-  const rot = (Math.random() - 0.5) * 10;
+  var W = window.innerWidth, H = window.innerHeight;
+  var w = Math.round(Math.random() * 110 + 155);
+  var h = Math.round(w * (Math.random() * 0.25 + 1.15));
+  var x = Math.random() * (W - w - 16) + 8;
+  var y = Math.random() * (H - h - 16) + 8;
+  var rot = (Math.random() - 0.5) * 10;
 
-  const card = document.createElement('div');
+  var card = document.createElement('div');
   card.className = 'photo-card';
-  card.style.cssText = `left:${x}px;top:${y}px;width:${w}px;height:${h}px;z-index:${100+total};--r:${rot}deg;transform:rotate(${rot}deg);`;
-  const img = document.createElement('img');
+  card.style.cssText = 'left:'+x+'px;top:'+y+'px;width:'+w+'px;height:'+h+'px;z-index:'+(100+total)+';--r:'+rot+'deg;transform:rotate('+rot+'deg);';
+
+  var img = document.createElement('img');
   img.src = dataUrl;
   card.appendChild(img);
   wall.appendChild(card);
 
   total++;
   countEl.textContent = total;
-  setTimeout(() => killCard(card), PHOTO_LIFE);
+  setTimeout(function() { killCard(card); }, PHOTO_LIFE);
 }
 
 function killCard(card) {
   card.classList.add('dying');
-  setTimeout(() => card.remove(), 1900);
+  setTimeout(function() { card.remove(); }, 1900);
 }
 </script>
 </body>
