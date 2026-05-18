@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WALL</title>
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;700&display=swap" rel="stylesheet">
 <style>
   :root { --pink:#ff2060; --dark:#05050a; }
@@ -33,7 +32,10 @@
   .qr-wrap {
     background:#fff; padding:16px; border-radius:10px;
     box-shadow:0 0 60px rgba(255,32,96,0.2), 0 0 0 1px rgba(255,32,96,0.3);
+    display:inline-block; line-height:0;
   }
+  #qr-img { width:200px; height:200px; display:block; }
+
   .qr-label {
     font-size:11px; letter-spacing:0.22em; text-transform:uppercase;
     color:rgba(255,255,255,0.35); text-align:center; margin-top:10px;
@@ -76,46 +78,43 @@
   #flash { position:fixed; inset:0; background:var(--pink); opacity:0; pointer-events:none; z-index:9996; transition:opacity 0.05s; }
   #flash.on { opacity:0.07; }
 
-  /* config overlay */
   #config-overlay {
-    position:fixed; inset:0; background:rgba(0,0,0,0.95);
+    position:fixed; inset:0; background:rgba(0,0,0,0.97);
     display:flex; flex-direction:column; align-items:center; justify-content:center;
     gap:16px; z-index:9999; padding:32px;
   }
   #config-overlay.hidden { display:none; }
   .cfg-title { font-family:'Bebas Neue',sans-serif; font-size:32px; letter-spacing:0.1em; color:var(--pink); }
-  .cfg-sub { font-size:12px; letter-spacing:0.15em; text-transform:uppercase; color:rgba(255,255,255,0.3); text-align:center; line-height:1.8; }
+  .cfg-sub { font-size:12px; letter-spacing:0.12em; text-transform:uppercase; color:rgba(255,255,255,0.35); text-align:center; line-height:2; }
   .cfg-input {
-    width:100%; max-width:480px; padding:14px 16px;
-    background:rgba(255,255,255,0.05); border:1px solid rgba(255,32,96,0.4);
-    border-radius:6px; color:#fff; font-family:'Syne',sans-serif; font-size:13px;
-    outline:none;
+    width:100%; max-width:500px; padding:14px 16px;
+    background:rgba(255,255,255,0.06); border:1px solid rgba(255,32,96,0.5);
+    border-radius:6px; color:#fff; font-size:14px; outline:none;
   }
   .cfg-input:focus { border-color:var(--pink); }
   .cfg-btn {
     padding:14px 40px; background:var(--pink); border:none; border-radius:6px;
-    color:#fff; font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:0.15em;
-    cursor:pointer;
+    color:#fff; font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:0.15em; cursor:pointer;
   }
-  .cfg-link { font-size:11px; color:rgba(255,255,255,0.2); text-align:center; line-height:1.8; }
+  .cfg-note { font-size:11px; color:rgba(255,255,255,0.2); text-align:center; }
 </style>
 </head>
 <body>
 
-<!-- CONFIG (prima esecuzione) -->
 <div id="config-overlay">
   <div class="cfg-title">CONFIGURA FIREBASE</div>
-  <div class="cfg-sub">Incolla qui il tuo Firebase Database URL<br>(lo trovi nel pannello Firebase → Realtime Database)</div>
-  <input class="cfg-input" id="db-url-input" placeholder="https://tuo-progetto-default-rtdb.firebaseio.com" type="url">
+  <div class="cfg-sub">Incolla il tuo Firebase Realtime Database URL<br>(Firebase Console → Realtime Database → copia l'URL in cima)</div>
+  <input class="cfg-input" id="db-url-input" type="url" placeholder="https://nome-progetto-default-rtdb.firebaseio.com">
   <button class="cfg-btn" onclick="saveConfig()">AVVIA WALL</button>
-  <div class="cfg-link">Non sai dove trovarlo? Segui le istruzioni nel file <strong>SETUP.txt</strong></div>
+  <div class="cfg-note">Viene salvato, non dovrai reinserirlo · <span style="color:rgba(255,32,96,0.5);cursor:pointer" onclick="localStorage.removeItem('dj_db_url')">reset</span></div>
 </div>
 
-<!-- WAIT -->
 <div id="wait-screen">
   <div class="logo">SHOOT<br>THE<br><em>NIGHT</em></div>
   <div>
-    <div class="qr-wrap"><canvas id="qr-canvas"></canvas></div>
+    <div class="qr-wrap">
+      <img id="qr-img" src="" alt="QR Code">
+    </div>
     <div class="qr-label">Scansiona &amp; invia la tua foto</div>
   </div>
   <div class="pulse"><div class="pulse-dot"></div>In attesa di foto</div>
@@ -126,52 +125,38 @@
 <div id="counter">Foto &nbsp;<b id="count">0</b></div>
 
 <script>
-// ── CONFIG ────────────────────────────────────────
-const PHOTO_LIFE    = 22000;
-const MAX_ON_SCREEN = 16;
+var PHOTO_LIFE    = 22000;
+var MAX_ON_SCREEN = 16;
 
-// Avvio automatico se già configurato
-var _dbUrl = localStorage.getItem('dj_db_url');
-if (_dbUrl) {
+// Auto-start se già configurato
+var saved = localStorage.getItem('dj_db_url');
+if (saved) {
   document.getElementById('config-overlay').classList.add('hidden');
-  startWall(_dbUrl);
+  startWall(saved);
 }
 
 function saveConfig() {
   var val = document.getElementById('db-url-input').value.trim().replace(/\/$/, '');
-  if (!val.startsWith('https://')) { alert('URL non valido'); return; }
+  if (!val.startsWith('https://')) { alert('URL non valido — deve iniziare con https://'); return; }
   localStorage.setItem('dj_db_url', val);
   document.getElementById('config-overlay').classList.add('hidden');
   startWall(val);
 }
 
 function startWall(dbUrl) {
+  // Costruisce URL della camera page
   var base = location.href.replace(/wall\.html.*$/, '');
   var cameraUrl = base + 'camera.html?db=' + encodeURIComponent(dbUrl);
-  generateQR(cameraUrl);
-  listenPhotos(dbUrl);
-}
 
-function generateQR(url) {
-  // Riprova finché la libreria non è caricata
-  if (typeof QRCode === 'undefined') {
-    setTimeout(function() { generateQR(url); }, 100);
-    return;
-  }
-  var canvas = document.getElementById('qr-canvas');
-  QRCode.toCanvas(canvas, url, {
-    width: 200, margin: 2,
-    color: { dark: '#000000', light: '#ffffff' }
-  }, function(err) {
-    if (err) {
-      // Fallback: API esterna
-      canvas.style.display = 'none';
-      var img = document.createElement('img');
-      img.width = 200; img.height = 200;
-      img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(url);
-      canvas.parentNode.insertBefore(img, canvas);
-    }
-  });
+  // QR come semplice <img> — nessuna libreria, funziona sempre
+  var qrImg = document.getElementById('qr-img');
+  qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=10&data=' + encodeURIComponent(cameraUrl);
+  qrImg.onerror = function() {
+    // Secondo fallback: quickchart.io
+    qrImg.src = 'https://quickchart.io/qr?size=200&text=' + encodeURIComponent(cameraUrl);
+  };
+
+  listenPhotos(dbUrl);
 }
 
 // ── FIREBASE POLLING ──────────────────────────────
