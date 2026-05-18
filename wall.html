@@ -117,7 +117,7 @@
     </div>
     <div class="qr-label">Scansiona &amp; invia la tua foto</div>
   </div>
-  <div class="pulse"><div class="pulse-dot"></div>In attesa di foto</div>
+  <div class="pulse"><div class="pulse-dot"></div><span id="status-msg">In attesa di foto…</span></div>
 </div>
 
 <div id="wall"></div>
@@ -164,24 +164,41 @@ var seenKeys = {};
 var total = 0;
 var firstPhoto = true;
 
+function setStatus(msg, color) {
+  var el = document.getElementById('status-msg');
+  if (el) { el.textContent = msg; el.style.color = color || 'rgba(255,255,255,0.25)'; }
+}
+
 function listenPhotos(dbUrl) {
+  setStatus('Connesso · in attesa di foto…');
   setInterval(function() {
-    fetch(dbUrl + '/photos.json?orderBy="ts"&limitToLast=20')
-      .then(function(r) { return r.json(); })
+    fetch(dbUrl + '/photos.json')
+      .then(function(r) {
+        if (r.status === 401 || r.status === 403) {
+          setStatus('⚠ Accesso negato — vai su Firebase → Regole e imposta ".read": true', '#ff6060');
+          return null;
+        }
+        if (!r.ok) {
+          setStatus('Errore HTTP ' + r.status, '#ff6060');
+          return null;
+        }
+        return r.json();
+      })
       .then(function(data) {
         if (!data) return;
         Object.keys(data).forEach(function(key) {
-          if (!seenKeys[key]) {
+          if (data[key] && !seenKeys[key]) {
             seenKeys[key] = true;
             addPhoto(data[key].dataUrl);
             fetch(dbUrl + '/photos/' + key + '.json', { method: 'DELETE' });
           }
         });
       })
-      .catch(function() {});
+      .catch(function(err) {
+        setStatus('Errore connessione: ' + err.message, '#ff6060');
+      });
   }, 1500);
 }
-
 // ── PHOTO WALL ────────────────────────────────────
 var wall    = document.getElementById('wall');
 var waitEl  = document.getElementById('wait-screen');
