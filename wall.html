@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WALL</title>
+<script src="https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root { --pink:#ff2060; --dark:#05050a; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--dark); overflow:hidden; width:100vw; height:100vh; font-family:'Syne',sans-serif; }
+
+  body::before {
+    content:''; position:fixed; inset:0; pointer-events:none; z-index:9997;
+    background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.06) 2px,rgba(0,0,0,0.06) 4px);
+  }
+
+  #wait-screen {
+    position:fixed; inset:0; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:32px; z-index:100;
+    background:var(--dark); transition:opacity 1.2s ease;
+  }
+  #wait-screen.hidden { opacity:0; pointer-events:none; }
+
+  .logo {
+    font-family:'Bebas Neue',sans-serif;
+    font-size:clamp(56px,11vw,130px);
+    letter-spacing:0.08em; line-height:0.88; color:#fff; text-align:center;
+  }
+  .logo em { color:var(--pink); font-style:normal; text-shadow:0 0 40px rgba(255,32,96,0.5); }
+
+  .qr-wrap {
+    background:#fff; padding:16px; border-radius:10px;
+    box-shadow:0 0 60px rgba(255,32,96,0.2), 0 0 0 1px rgba(255,32,96,0.3);
+  }
+  .qr-label {
+    font-size:11px; letter-spacing:0.22em; text-transform:uppercase;
+    color:rgba(255,255,255,0.35); text-align:center; margin-top:10px;
+  }
+
+  .pulse { display:flex; gap:8px; align-items:center; font-size:11px; letter-spacing:0.2em; text-transform:uppercase; color:rgba(255,255,255,0.25); }
+  .pulse-dot { width:6px; height:6px; border-radius:50%; background:var(--pink); animation:pulseDot 1.4s ease-in-out infinite; }
+  @keyframes pulseDot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.3;transform:scale(0.6)} }
+
+  #wall { position:fixed; inset:0; }
+
+  @keyframes floatIn {
+    from { opacity:0; transform:scale(0.55) rotate(var(--r)) translateY(50px); filter:blur(4px); }
+    to   { opacity:1; transform:scale(1)   rotate(var(--r)) translateY(0);     filter:blur(0); }
+  }
+  @keyframes fadeOut {
+    to { opacity:0; transform:scale(0.88) rotate(var(--r)); filter:blur(3px); }
+  }
+
+  .photo-card {
+    position:absolute; border-radius:3px; overflow:hidden;
+    box-shadow:0 0 0 2px rgba(255,32,96,0.25), 0 16px 60px rgba(0,0,0,0.95);
+    animation:floatIn 0.65s cubic-bezier(0.34,1.35,0.64,1) forwards;
+    will-change:transform,opacity; --r:0deg;
+  }
+  .photo-card:hover {
+    box-shadow:0 0 0 2px var(--pink), 0 0 50px rgba(255,32,96,0.35), 0 16px 60px rgba(0,0,0,0.95) !important;
+    z-index:9990 !important;
+  }
+  .photo-card.dying { animation:fadeOut 1.8s ease forwards; }
+  .photo-card img { display:block; width:100%; height:100%; object-fit:cover; }
+
+  #counter {
+    position:fixed; bottom:20px; right:24px; z-index:9999;
+    font-family:'Bebas Neue',sans-serif; font-size:12px; letter-spacing:0.25em;
+    color:rgba(255,255,255,0.15); text-transform:uppercase;
+  }
+  #counter b { color:var(--pink); font-size:20px; font-weight:normal; }
+
+  #flash { position:fixed; inset:0; background:var(--pink); opacity:0; pointer-events:none; z-index:9996; transition:opacity 0.05s; }
+  #flash.on { opacity:0.07; }
+
+  /* config overlay */
+  #config-overlay {
+    position:fixed; inset:0; background:rgba(0,0,0,0.95);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:16px; z-index:9999; padding:32px;
+  }
+  #config-overlay.hidden { display:none; }
+  .cfg-title { font-family:'Bebas Neue',sans-serif; font-size:32px; letter-spacing:0.1em; color:var(--pink); }
+  .cfg-sub { font-size:12px; letter-spacing:0.15em; text-transform:uppercase; color:rgba(255,255,255,0.3); text-align:center; line-height:1.8; }
+  .cfg-input {
+    width:100%; max-width:480px; padding:14px 16px;
+    background:rgba(255,255,255,0.05); border:1px solid rgba(255,32,96,0.4);
+    border-radius:6px; color:#fff; font-family:'Syne',sans-serif; font-size:13px;
+    outline:none;
+  }
+  .cfg-input:focus { border-color:var(--pink); }
+  .cfg-btn {
+    padding:14px 40px; background:var(--pink); border:none; border-radius:6px;
+    color:#fff; font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:0.15em;
+    cursor:pointer; transition:opacity 0.2s;
+  }
+  .cfg-btn:hover { opacity:0.85; }
+  .cfg-link { font-size:11px; color:rgba(255,255,255,0.2); text-align:center; line-height:1.8; }
+  .cfg-link a { color:rgba(255,32,96,0.6); }
+</style>
+</head>
+<body>
+
+<!-- CONFIG (prima esecuzione) -->
+<div id="config-overlay">
+  <div class="cfg-title">CONFIGURA FIREBASE</div>
+  <div class="cfg-sub">Incolla qui il tuo Firebase Database URL<br>(lo trovi nel pannello Firebase → Realtime Database)</div>
+  <input class="cfg-input" id="db-url-input" placeholder="https://tuo-progetto-default-rtdb.firebaseio.com" type="url">
+  <button class="cfg-btn" onclick="saveConfig()">AVVIA WALL</button>
+  <div class="cfg-link">
+    Non sai dove trovarlo? Segui le istruzioni nel file <strong>SETUP.txt</strong>
+  </div>
+</div>
+
+<!-- WAIT -->
+<div id="wait-screen">
+  <div class="logo">SHOOT<br>THE<br><em>NIGHT</em></div>
+  <div>
+    <div class="qr-wrap"><canvas id="qr-canvas"></canvas></div>
+    <div class="qr-label">Scansiona &amp; invia la tua foto</div>
+  </div>
+  <div class="pulse"><div class="pulse-dot"></div>In attesa di foto</div>
+</div>
+
+<div id="wall"></div>
+<div id="flash"></div>
+<div id="counter">Foto &nbsp;<b id="count">0</b></div>
+
+<script type="module">
+// ── CONFIG ────────────────────────────────────────
+const PHOTO_LIFE    = 22000;
+const MAX_ON_SCREEN = 16;
+
+let dbUrl = localStorage.getItem('dj_db_url');
+if (dbUrl) startWall(dbUrl);
+
+window.saveConfig = function() {
+  const val = document.getElementById('db-url-input').value.trim().replace(/\/$/, '');
+  if (!val.startsWith('https://')) { alert('URL non valido'); return; }
+  localStorage.setItem('dj_db_url', val);
+  document.getElementById('config-overlay').classList.add('hidden');
+  startWall(val);
+};
+
+function startWall(dbUrl) {
+  document.getElementById('config-overlay').classList.add('hidden');
+
+  // QR code — punta alla camera page con lo stesso host
+  const base = location.href.replace(/wall\.html.*$/, '');
+  const cameraUrl = `${base}camera.html?db=${encodeURIComponent(dbUrl)}`;
+  QRCode.toCanvas(document.getElementById('qr-canvas'), cameraUrl, {
+    width:200, margin:1, color:{dark:'#000',light:'#fff'}
+  });
+
+  // Firebase REST streaming (SSE) — nessuna libreria necessaria
+  listenPhotos(dbUrl);
+}
+
+// ── FIREBASE REST ─────────────────────────────────
+let seenKeys = new Set();
+let total = 0;
+let firstPhoto = true;
+
+function listenPhotos(dbUrl) {
+  // Usa SSE di Firebase per ricevere aggiornamenti in tempo reale
+  const url = `${dbUrl}/photos.json?orderBy="ts"&limitToLast=1`;
+  
+  // Polling ogni 1.5s (semplice e affidabile)
+  setInterval(async () => {
+    try {
+      const res = await fetch(`${dbUrl}/photos.json?orderBy="ts"&limitToLast=20`);
+      const data = await res.json();
+      if (!data) return;
+      Object.entries(data).forEach(([key, val]) => {
+        if (!seenKeys.has(key)) {
+          seenKeys.add(key);
+          addPhoto(val.dataUrl);
+          // Cancella dal db dopo aver ricevuto (opzionale, mantiene il db leggero)
+          fetch(`${dbUrl}/photos/${key}.json`, { method:'DELETE' });
+        }
+      });
+    } catch(e) { /* silenzioso */ }
+  }, 1500);
+}
+
+// ── PHOTO WALL ────────────────────────────────────
+const wall    = document.getElementById('wall');
+const waitEl  = document.getElementById('wait-screen');
+const countEl = document.getElementById('count');
+const flashEl = document.getElementById('flash');
+
+function addPhoto(dataUrl) {
+  if (!dataUrl) return;
+  if (firstPhoto) { waitEl.classList.add('hidden'); firstPhoto = false; }
+
+  flashEl.classList.add('on');
+  setTimeout(() => flashEl.classList.remove('on'), 120);
+
+  const alive = wall.querySelectorAll('.photo-card:not(.dying)');
+  if (alive.length >= MAX_ON_SCREEN) killCard(alive[0]);
+
+  const W = window.innerWidth, H = window.innerHeight;
+  const w = Math.round(Math.random() * 110 + 155);
+  const h = Math.round(w * (Math.random() * 0.25 + 1.15));
+  const x = Math.random() * (W - w - 16) + 8;
+  const y = Math.random() * (H - h - 16) + 8;
+  const rot = (Math.random() - 0.5) * 10;
+
+  const card = document.createElement('div');
+  card.className = 'photo-card';
+  card.style.cssText = `left:${x}px;top:${y}px;width:${w}px;height:${h}px;z-index:${100+total};--r:${rot}deg;transform:rotate(${rot}deg);`;
+  const img = document.createElement('img');
+  img.src = dataUrl;
+  card.appendChild(img);
+  wall.appendChild(card);
+
+  total++;
+  countEl.textContent = total;
+  setTimeout(() => killCard(card), PHOTO_LIFE);
+}
+
+function killCard(card) {
+  card.classList.add('dying');
+  setTimeout(() => card.remove(), 1900);
+}
+</script>
+</body>
+</html>
