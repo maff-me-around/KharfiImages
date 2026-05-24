@@ -6,222 +6,172 @@
 <title>WALL</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;700&display=swap" rel="stylesheet">
 <style>
-  :root { --pink:#ff2060; --dark:#05050a; --scale:1; }
   * { margin:0; padding:0; box-sizing:border-box; }
-  body { background:var(--dark); overflow:hidden; width:100vw; height:100vh; font-family:'Syne',sans-serif; }
 
+  body {
+    background: #00B140;
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+    font-family: 'Courier New', monospace;
+  }
+
+  /* scanlines */
   body::before {
-    content:''; position:fixed; inset:0; pointer-events:none; z-index:9990;
-    background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.05) 2px,rgba(0,0,0,0.05) 4px);
+    content:''; position:fixed; inset:0; pointer-events:none; z-index:1;
+    background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.04) 3px,rgba(0,0,0,0.04) 4px);
   }
 
   /* ── WAIT SCREEN ── */
   #wait-screen {
-    position:fixed; inset:0; display:flex; flex-direction:column;
-    align-items:center; justify-content:center; gap:32px; z-index:500;
-    background:var(--dark); transition:opacity 1.2s ease;
+    position:fixed; inset:0; z-index:900;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:28px;
+    background:#00B140; transition:opacity 1s ease;
   }
   #wait-screen.hidden { opacity:0; pointer-events:none; }
-  .logo { font-family:'Bebas Neue',sans-serif; font-size:clamp(56px,11vw,130px); letter-spacing:0.08em; line-height:0.88; color:#fff; text-align:center; }
-  .logo em { color:var(--pink); font-style:normal; text-shadow:0 0 40px rgba(255,32,96,0.5); }
-  .qr-wrap { background:#fff; padding:16px; border-radius:10px; box-shadow:0 0 60px rgba(255,32,96,0.2); display:inline-block; line-height:0; }
-  #qr-img { width:200px; height:200px; display:block; }
-  .qr-label { font-size:11px; letter-spacing:0.22em; text-transform:uppercase; color:rgba(255,255,255,0.35); text-align:center; margin-top:10px; }
-  .pulse { display:flex; gap:8px; align-items:center; font-size:11px; letter-spacing:0.2em; text-transform:uppercase; color:rgba(255,255,255,0.25); }
-  .pulse-dot { width:6px; height:6px; border-radius:50%; background:var(--pink); animation:pulseDot 1.4s ease-in-out infinite; }
-  @keyframes pulseDot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.3;transform:scale(0.6)} }
+  .logo { font-family:'Bebas Neue',sans-serif; font-size:clamp(56px,11vw,130px); letter-spacing:0.08em; line-height:0.88; color:#fff; text-align:center; text-shadow:2px 2px 0 rgba(0,0,0,0.3); }
+  .logo em { color:#000; font-style:normal; }
+  .qr-wrap { background:#fff; padding:14px; border-top:2px solid #fff; border-left:2px solid #fff; border-right:2px solid #404040; border-bottom:2px solid #404040; box-shadow:2px 2px 0 #000; display:inline-block; line-height:0; }
+  #qr-img { width:180px; height:180px; display:block; }
+  .qr-label { font-size:11px; letter-spacing:0.2em; text-transform:uppercase; color:rgba(0,0,0,0.5); text-align:center; margin-top:8px; }
+  .pulse { display:flex; gap:8px; align-items:center; font-size:11px; letter-spacing:0.15em; text-transform:uppercase; color:rgba(0,0,0,0.45); }
+  .pulse-dot { width:6px; height:6px; border-radius:50%; background:#000; animation:pd 1.4s ease-in-out infinite; }
+  @keyframes pd { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.2;transform:scale(0.5)} }
 
-  /* ── HERO OVERLAY ── */
+  /* ── HERO ── */
   #hero-overlay {
-    position:fixed; inset:0; z-index:400;
+    position:fixed; inset:0; z-index:800;
     display:flex; align-items:center; justify-content:center;
     pointer-events:none;
   }
-
-  .hero-window {
-    pointer-events:none;
-    animation: heroIn 0.4s cubic-bezier(0.22,1,0.36,1) forwards,
-               heroOut 0.6s ease 2.2s forwards;
-    transform-origin: center center;
+  .hero-win {
+    animation: hIn .35s cubic-bezier(.22,1,.36,1) forwards, hOut .5s ease 2.3s forwards;
   }
+  @keyframes hIn  { from{opacity:0;transform:scale(.5)} to{opacity:1;transform:scale(1)} }
+  @keyframes hOut { from{opacity:1;transform:scale(1)} to{opacity:0;transform:scale(.25) translateY(80px)} }
 
-  @keyframes heroIn {
-    from { opacity:0; transform:scale(0.6); }
-    to   { opacity:1; transform:scale(1); }
-  }
-  @keyframes heroOut {
-    from { opacity:1; transform:scale(1); }
-    to   { opacity:0; transform:scale(0.4) translateY(60px); }
-  }
-
-  /* ── WIN95 WINDOW ── */
+  /* ── WIN95 ── */
   .win95 {
     background:#c0c0c0;
-    border-top:2px solid #fff;
-    border-left:2px solid #fff;
-    border-right:2px solid #404040;
-    border-bottom:2px solid #404040;
+    border-top:2px solid #fff; border-left:2px solid #fff;
+    border-right:2px solid #404040; border-bottom:2px solid #404040;
     box-shadow:2px 2px 0 #000;
-    font-family:'Courier New', monospace;
-    font-size:11px;
   }
-
-  .win95-titlebar {
+  .win95-bar {
     background:linear-gradient(90deg,#000080,#1084d0);
-    color:#fff;
-    padding:3px 4px;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    font-size:11px;
-    font-family:'Courier New', monospace;
-    font-weight:bold;
-    letter-spacing:0;
-    user-select:none;
+    color:#fff; padding:2px 4px;
+    display:flex; align-items:center; justify-content:space-between;
+    font-size:11px; font-weight:bold; font-family:'Courier New',monospace;
+    user-select:none; white-space:nowrap;
   }
-
-  .win95-title-text { display:flex; align-items:center; gap:4px; }
-  .win95-icon { width:14px; height:14px; background:var(--pink); display:inline-block; }
-
+  .win95-bar-left { display:flex; align-items:center; gap:3px; }
+  .win95-dot { width:12px; height:12px; background:#ff2060; display:inline-block; flex-shrink:0; }
   .win95-btns { display:flex; gap:2px; }
   .win95-btn {
-    width:16px; height:14px;
-    background:#c0c0c0;
-    border-top:1px solid #fff;
-    border-left:1px solid #fff;
-    border-right:1px solid #404040;
-    border-bottom:1px solid #404040;
-    display:flex; align-items:center; justify-content:center;
-    font-size:9px; color:#000; font-weight:bold; cursor:default;
-    line-height:1;
+    width:15px; height:13px; background:#c0c0c0;
+    border-top:1px solid #fff; border-left:1px solid #fff;
+    border-right:1px solid #404040; border-bottom:1px solid #404040;
+    font-size:8px; display:flex; align-items:center; justify-content:center; color:#000;
   }
-
   .win95-body {
-    padding:2px;
-    background:#c0c0c0;
-    border-top:2px solid #404040;
-    border-left:2px solid #404040;
-    border-right:2px solid #fff;
-    border-bottom:2px solid #fff;
-    line-height:0;
+    border-top:2px solid #404040; border-left:2px solid #404040;
+    border-right:2px solid #fff; border-bottom:2px solid #fff;
+    padding:2px; background:#c0c0c0; line-height:0;
   }
-
-  .win95-body img {
-    display:block;
-  }
+  .win95-body img { display:block; object-fit:cover; }
 
   /* ── FLOATING CARDS ── */
-  #wall { position:fixed; inset:0; }
+  #wall { position:fixed; inset:0; z-index:10; overflow:hidden; }
 
   .photo-card {
     position:absolute;
-    transform-origin:center center;
-    animation:floatSettle 0.5s cubic-bezier(0.34,1.2,0.64,1) forwards;
-    will-change:transform,opacity;
-    --r:0deg;
-    --tx:0px;
-    --ty:0px;
+    cursor:default;
+    transition: box-shadow .2s;
+  }
+  .photo-card:hover .win95 {
+    box-shadow:4px 4px 0 #000, 0 0 20px rgba(0,0,0,0.3);
+  }
+  .photo-card.dying {
+    animation: cardDie 1.5s ease forwards;
+  }
+  @keyframes cardDie {
+    to { opacity:0; transform:scale(0.7); filter:blur(4px); }
   }
 
-  @keyframes floatSettle {
-    from { opacity:0; transform:translate(var(--tx),var(--ty)) rotate(var(--r)) scale(0.3); filter:blur(6px); }
-    to   { opacity:1; transform:translate(0,0) rotate(var(--r)) scale(var(--scale)); filter:blur(0); }
-  }
-
-  @keyframes fadeOut {
-    to { opacity:0; transform:rotate(var(--r)) scale(calc(var(--scale)*0.85)); filter:blur(4px); }
-  }
-
-  .photo-card.dying { animation:fadeOut 1.8s ease forwards; }
+  /* ── FLASH ── */
+  #flash { position:fixed; inset:0; background:#fff; opacity:0; pointer-events:none; z-index:850; transition:opacity .05s; }
+  #flash.on { opacity:.12; }
 
   /* ── COUNTER ── */
   #counter {
-    position:fixed; bottom:72px; right:24px; z-index:9999;
-    font-family:'Bebas Neue',sans-serif; font-size:12px; letter-spacing:0.25em;
-    color:rgba(255,255,255,0.15); text-transform:uppercase;
+    position:fixed; top:12px; right:16px; z-index:950;
+    font-family:'Courier New',monospace; font-size:11px; color:rgba(0,0,0,0.35);
   }
-  #counter b { color:var(--pink); font-size:20px; font-weight:normal; }
+  #counter b { color:#000; }
 
-  /* ── FLASH ── */
-  #flash { position:fixed; inset:0; background:var(--pink); opacity:0; pointer-events:none; z-index:9989; transition:opacity 0.05s; }
-  #flash.on { opacity:0.07; }
-
-  /* ── SLIDER PANEL (Win95 style) ── */
-  #slider-panel {
-    position:fixed; bottom:16px; left:50%; transform:translateX(-50%);
-    z-index:9999;
-    font-family:'Courier New', monospace; font-size:11px;
+  /* ── CONTROL PANEL ── */
+  #ctrl-panel {
+    position:fixed; bottom:12px; left:50%; transform:translateX(-50%);
+    z-index:950;
   }
-
-  .slider-win95 {
+  .ctrl-win {
     background:#c0c0c0;
-    border-top:2px solid #fff;
-    border-left:2px solid #fff;
-    border-right:2px solid #404040;
-    border-bottom:2px solid #404040;
+    border-top:2px solid #fff; border-left:2px solid #fff;
+    border-right:2px solid #404040; border-bottom:2px solid #404040;
     box-shadow:2px 2px 0 #000;
-    min-width:280px;
+    min-width:520px;
   }
-
-  .slider-titlebar {
+  .ctrl-bar {
     background:linear-gradient(90deg,#000080,#1084d0);
-    color:#fff; padding:3px 6px;
-    font-size:10px; font-weight:bold; letter-spacing:0;
+    color:#fff; padding:2px 6px; font-size:11px; font-weight:bold;
+    font-family:'Courier New',monospace;
     display:flex; align-items:center; gap:4px;
   }
-
-  .slider-body {
-    padding:8px 12px;
-    display:flex; align-items:center; gap:10px;
+  .ctrl-body {
+    padding:8px 12px; display:flex; align-items:center; gap:16px; flex-wrap:wrap;
   }
-
-  .slider-label { font-size:10px; color:#000; white-space:nowrap; }
-
-  #size-slider {
-    -webkit-appearance:none; appearance:none;
-    width:160px; height:4px;
-    background:#808080;
-    border-top:1px solid #404040;
-    border-left:1px solid #404040;
-    border-right:1px solid #fff;
-    border-bottom:1px solid #fff;
-    outline:none; cursor:pointer;
+  .ctrl-field { display:flex; align-items:center; gap:5px; font-size:11px; color:#000; }
+  .ctrl-field label { white-space:nowrap; }
+  .ctrl-field input[type=number], .ctrl-field input[type=range] {
+    font-family:'Courier New',monospace; font-size:11px;
   }
-  #size-slider::-webkit-slider-thumb {
-    -webkit-appearance:none;
-    width:12px; height:20px;
-    background:#c0c0c0;
-    border-top:2px solid #fff;
-    border-left:2px solid #fff;
-    border-right:2px solid #404040;
-    border-bottom:2px solid #404040;
-    cursor:pointer;
+  .ctrl-field input[type=number] {
+    width:56px; padding:1px 4px; background:#fff;
+    border-top:2px solid #404040; border-left:2px solid #404040;
+    border-right:2px solid #fff; border-bottom:2px solid #fff;
+    outline:none;
   }
-  #size-slider::-moz-range-thumb {
-    width:12px; height:20px;
-    background:#c0c0c0;
-    border-top:2px solid #fff;
-    border-left:2px solid #fff;
-    border-right:2px solid #404040;
-    border-bottom:2px solid #404040;
-    cursor:pointer; border-radius:0;
+  .ctrl-field input[type=range] {
+    width:100px; -webkit-appearance:none; appearance:none; height:4px;
+    background:#808080; border-top:1px solid #404040; border-left:1px solid #404040;
+    border-right:1px solid #fff; border-bottom:1px solid #fff; outline:none; cursor:pointer;
   }
-
-  #size-val { font-size:10px; color:#000; min-width:28px; }
+  .ctrl-field input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance:none; width:11px; height:18px; background:#c0c0c0;
+    border-top:2px solid #fff; border-left:2px solid #fff;
+    border-right:2px solid #404040; border-bottom:2px solid #404040; cursor:pointer;
+  }
+  .ctrl-sep { width:1px; height:28px; background:#808080; border-right:1px solid #fff; }
+  .ctrl-btn {
+    padding:2px 10px; background:#c0c0c0; cursor:pointer; font-family:'Courier New',monospace; font-size:11px;
+    border-top:2px solid #fff; border-left:2px solid #fff;
+    border-right:2px solid #404040; border-bottom:2px solid #404040;
+    white-space:nowrap;
+  }
+  .ctrl-btn:active { border-top:2px solid #404040; border-left:2px solid #404040; border-right:2px solid #fff; border-bottom:2px solid #fff; }
 
   /* ── CONFIG OVERLAY ── */
   #config-overlay {
-    position:fixed; inset:0; background:rgba(0,0,0,0.97);
+    position:fixed; inset:0; background:rgba(0,90,32,0.97);
     display:flex; flex-direction:column; align-items:center; justify-content:center;
     gap:16px; z-index:9999; padding:32px;
   }
   #config-overlay.hidden { display:none; }
-  .cfg-title { font-family:'Bebas Neue',sans-serif; font-size:32px; letter-spacing:0.1em; color:var(--pink); }
-  .cfg-sub { font-size:12px; letter-spacing:0.12em; text-transform:uppercase; color:rgba(255,255,255,0.35); text-align:center; line-height:2; }
-  .cfg-input { width:100%; max-width:500px; padding:14px 16px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,32,96,0.5); border-radius:6px; color:#fff; font-size:14px; outline:none; }
-  .cfg-input:focus { border-color:var(--pink); }
-  .cfg-btn { padding:14px 40px; background:var(--pink); border:none; border-radius:6px; color:#fff; font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:0.15em; cursor:pointer; }
-  .cfg-note { font-size:11px; color:rgba(255,255,255,0.2); text-align:center; }
+  .cfg-title { font-family:'Bebas Neue',sans-serif; font-size:32px; letter-spacing:.1em; color:#fff; }
+  .cfg-sub { font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:rgba(255,255,255,.5); text-align:center; line-height:2; }
+  .cfg-input { width:100%; max-width:500px; padding:12px 14px; background:#fff; border-top:2px solid #404040; border-left:2px solid #404040; border-right:2px solid #fff; border-bottom:2px solid #fff; font-size:13px; outline:none; font-family:'Courier New',monospace; }
+  .cfg-btn { padding:10px 36px; background:#c0c0c0; border-top:2px solid #fff; border-left:2px solid #fff; border-right:2px solid #404040; border-bottom:2px solid #404040; font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:.15em; cursor:pointer; }
+  .cfg-note { font-size:11px; color:rgba(255,255,255,.3); text-align:center; }
 </style>
 </head>
 <body>
@@ -229,95 +179,127 @@
 <!-- CONFIG -->
 <div id="config-overlay">
   <div class="cfg-title">CONFIGURA FIREBASE</div>
-  <div class="cfg-sub">Incolla il tuo Firebase Realtime Database URL<br>(Firebase Console → Realtime Database → copia l'URL in cima)</div>
-  <input class="cfg-input" id="db-url-input" type="url" placeholder="https://nome-progetto-default-rtdb.firebaseio.com">
+  <div class="cfg-sub">Incolla il Firebase Realtime Database URL</div>
+  <input class="cfg-input" id="db-url-input" type="url" placeholder="https://nome-default-rtdb.firebaseio.com">
   <button class="cfg-btn" onclick="saveConfig()">AVVIA WALL</button>
-  <div class="cfg-note">Viene salvato · <span style="color:rgba(255,32,96,0.5);cursor:pointer" onclick="localStorage.removeItem('dj_db_url')">reset</span></div>
+  <div class="cfg-note">Salvato in locale · <span style="color:rgba(255,200,0,.7);cursor:pointer" onclick="localStorage.removeItem('dj_db_url');location.reload()">reset</span></div>
 </div>
 
 <!-- WAIT -->
 <div id="wait-screen">
   <div class="logo">SHOOT<br>THE<br><em>NIGHT</em></div>
   <div>
-    <div class="qr-wrap"><img id="qr-img" src="" alt="QR Code"></div>
+    <div class="qr-wrap"><img id="qr-img" src="" alt="QR"></div>
     <div class="qr-label">Scansiona &amp; invia la tua foto</div>
   </div>
-  <div class="pulse"><div class="pulse-dot"></div><span id="status-msg">In attesa di foto…</span></div>
+  <div class="pulse"><div class="pulse-dot"></div><span id="status-msg">In attesa…</span></div>
 </div>
 
-<!-- HERO (foto grande al centro) -->
+<!-- HERO -->
 <div id="hero-overlay"></div>
 
 <!-- WALL -->
 <div id="wall"></div>
 <div id="flash"></div>
-<div id="counter">Foto &nbsp;<b id="count">0</b></div>
+<div id="counter">Foto <b id="count">0</b></div>
 
 <!-- CONTROL PANEL -->
-<div id="slider-panel">
-  <div class="slider-win95">
-    <div class="slider-titlebar">⚙ Display Properties</div>
-    <div class="slider-body" style="flex-wrap:wrap;gap:12px 20px;">
-      <!-- Dimensione foto -->
-      <div style="display:flex;align-items:center;gap:6px;">
-        <span class="slider-label">Foto:</span>
-        <input type="range" id="size-slider" min="30" max="250" value="100" step="5" style="width:120px;">
-        <input type="number" id="size-input" min="30" max="250" value="100" style="width:48px;padding:1px 3px;font-family:'Courier New',monospace;font-size:10px;border:inset 2px #808080;background:#fff;">
-        <span class="slider-label">%</span>
+<div id="ctrl-panel">
+  <div class="ctrl-win">
+    <div class="ctrl-bar">⚙ Display Properties</div>
+    <div class="ctrl-body">
+
+      <div class="ctrl-field">
+        <label>Dimensione:</label>
+        <input type="range" id="sl-size" min="30" max="300" value="100">
+        <input type="number" id="in-size" min="30" max="300" value="100">
+        <label>%</label>
       </div>
-      <!-- Larghezza canvas -->
-      <div style="display:flex;align-items:center;gap:6px;">
-        <span class="slider-label">W:</span>
-        <input type="number" id="canvas-w" value="" placeholder="auto" style="width:60px;padding:1px 3px;font-family:'Courier New',monospace;font-size:10px;border:inset 2px #808080;background:#fff;">
-        <span class="slider-label">px</span>
+
+      <div class="ctrl-sep"></div>
+
+      <div class="ctrl-field">
+        <label>Canvas W:</label>
+        <input type="number" id="in-w" placeholder="auto" min="400" max="7680">
+        <label>px</label>
       </div>
-      <!-- Altezza canvas -->
-      <div style="display:flex;align-items:center;gap:6px;">
-        <span class="slider-label">H:</span>
-        <input type="number" id="canvas-h" value="" placeholder="auto" style="width:60px;padding:1px 3px;font-family:'Courier New',monospace;font-size:10px;border:inset 2px #808080;background:#fff;">
-        <span class="slider-label">px</span>
+      <div class="ctrl-field">
+        <label>H:</label>
+        <input type="number" id="in-h" placeholder="auto" min="300" max="4320">
+        <label>px</label>
       </div>
-      <button onclick="applyCanvas()" style="padding:2px 10px;font-family:'Courier New',monospace;font-size:10px;background:#c0c0c0;border-top:2px solid #fff;border-left:2px solid #fff;border-right:2px solid #404040;border-bottom:2px solid #404040;cursor:pointer;">Apply</button>
+      <button class="ctrl-btn" onclick="applyCanvas()">Apply</button>
+
+      <div class="ctrl-sep"></div>
+
+      <div class="ctrl-field">
+        <label>Durata:</label>
+        <input type="number" id="in-life" min="5" max="120" value="22">
+        <label>sec</label>
+      </div>
+      <button class="ctrl-btn" onclick="applyLife()">Apply</button>
+
     </div>
   </div>
 </div>
 
 <script>
+// ── STATE ────────────────────────────────────────────
 var PHOTO_LIFE    = 22000;
-var MAX_ON_SCREEN = 16;
-var photoScale    = 1.0; // moltiplicatore globale
+var MAX_CARDS     = 14;
+var photoSizePct  = 100;   // % rispetto alla base
+var BASE_W        = 160;   // larghezza base foto in px
+var cards         = [];    // [{el, x, y, vx, vy, w, h}]
+var total         = 0;
+var firstPhoto    = true;
+var seenKeys      = {};
+var animRunning   = false;
 
-// ── CONTROLS ────────────────────────────────────
-var slider    = document.getElementById('size-slider');
-var sizeInput = document.getElementById('size-input');
+// ── CONTROLS ─────────────────────────────────────────
+var slSize  = document.getElementById('sl-size');
+var inSize  = document.getElementById('in-size');
+var inW     = document.getElementById('in-w');
+var inH     = document.getElementById('in-h');
+var inLife  = document.getElementById('in-life');
 
-function applyScale(val) {
-  val = Math.min(250, Math.max(30, parseInt(val) || 100));
-  photoScale = val / 100;
-  slider.value = val;
-  sizeInput.value = val;
-  document.querySelectorAll('.photo-card:not(.dying)').forEach(function(card) {
-    var rot = card.dataset.rot || '0';
-    card.style.transform = 'rotate(' + rot + 'deg) scale(' + photoScale + ')';
+// Slider ↔ input sync
+slSize.addEventListener('input', function() {
+  inSize.value = this.value;
+  photoSizePct = parseInt(this.value);
+  resizeAllCards();
+});
+inSize.addEventListener('change', function() {
+  var v = Math.min(300, Math.max(30, parseInt(this.value)||100));
+  this.value = v; slSize.value = v;
+  photoSizePct = v;
+  resizeAllCards();
+});
+
+function resizeAllCards() {
+  var scale = photoSizePct / 100;
+  cards.forEach(function(c) {
+    c.w = Math.round(BASE_W * scale);
+    c.h = Math.round(c.w * 1.3);
+    c.el.style.width  = c.w + 'px';
+    c.el.style.height = c.h + 'px';
   });
 }
 
-slider.addEventListener('input', function() { applyScale(this.value); });
-sizeInput.addEventListener('change', function() { applyScale(this.value); });
-sizeInput.addEventListener('keydown', function(e) { if(e.key==='Enter') applyScale(this.value); });
-
 function applyCanvas() {
-  var w = parseInt(document.getElementById('canvas-w').value);
-  var h = parseInt(document.getElementById('canvas-h').value);
-  var wall = document.getElementById('wall');
-  var body = document.body;
-  if (w > 0) { body.style.width = w+'px'; wall.style.width = w+'px'; }
-  else        { body.style.width = '100vw'; wall.style.width = '100%'; }
-  if (h > 0) { body.style.height = h+'px'; wall.style.height = h+'px'; }
-  else        { body.style.height = '100vh'; wall.style.height = '100%'; }
+  var w = parseInt(inW.value) || 0;
+  var h = parseInt(inH.value) || 0;
+  document.body.style.width  = w > 0 ? w+'px' : '100vw';
+  document.body.style.height = h > 0 ? h+'px' : '100vh';
+  document.getElementById('wall').style.width  = w > 0 ? w+'px' : '100%';
+  document.getElementById('wall').style.height = h > 0 ? h+'px' : '100%';
 }
 
-// ── CONFIG ──────────────────────────────────────
+function applyLife() {
+  var v = parseInt(inLife.value) || 22;
+  PHOTO_LIFE = Math.max(5, v) * 1000;
+}
+
+// ── CONFIG ───────────────────────────────────────────
 var saved = localStorage.getItem('dj_db_url');
 if (saved) {
   document.getElementById('config-overlay').classList.add('hidden');
@@ -334,23 +316,17 @@ function saveConfig() {
 
 function startWall(dbUrl) {
   var base = location.href.replace(/wall\.html.*$/, '');
-  var cameraUrl = base + 'camera.html?db=' + encodeURIComponent(dbUrl);
-  var qrImg = document.getElementById('qr-img');
-  qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=10&data=' + encodeURIComponent(cameraUrl);
-  qrImg.onerror = function() {
-    qrImg.src = 'https://quickchart.io/qr?size=200&text=' + encodeURIComponent(cameraUrl);
-  };
+  var camUrl = base + 'camera.html?db=' + encodeURIComponent(dbUrl);
+  var qr = document.getElementById('qr-img');
+  qr.src = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=10&data=' + encodeURIComponent(camUrl);
+  qr.onerror = function() { qr.src = 'https://quickchart.io/qr?size=180&text=' + encodeURIComponent(camUrl); };
   listenPhotos(dbUrl);
 }
 
-// ── FIREBASE ────────────────────────────────────
-var seenKeys = {};
-var total = 0;
-var firstPhoto = true;
-
-function setStatus(msg, color) {
+// ── FIREBASE ─────────────────────────────────────────
+function setStatus(msg, col) {
   var el = document.getElementById('status-msg');
-  if (el) { el.textContent = msg; el.style.color = color || 'rgba(255,255,255,0.25)'; }
+  if (el) { el.textContent = msg; el.style.color = col || 'rgba(0,0,0,0.4)'; }
 }
 
 function listenPhotos(dbUrl) {
@@ -358,8 +334,8 @@ function listenPhotos(dbUrl) {
   setInterval(function() {
     fetch(dbUrl + '/photos.json')
       .then(function(r) {
-        if (r.status === 401 || r.status === 403) { setStatus('⚠ Accesso negato — controlla le regole Firebase', '#ff6060'); return null; }
-        if (!r.ok) { setStatus('Errore HTTP ' + r.status, '#ff6060'); return null; }
+        if (r.status===401||r.status===403) { setStatus('⚠ Accesso negato — controlla le regole Firebase','#900'); return null; }
+        if (!r.ok) { setStatus('Errore HTTP '+r.status,'#900'); return null; }
         return r.json();
       })
       .then(function(data) {
@@ -368,48 +344,39 @@ function listenPhotos(dbUrl) {
           if (data[key] && !seenKeys[key]) {
             seenKeys[key] = true;
             addPhoto(data[key].dataUrl);
-            fetch(dbUrl + '/photos/' + key + '.json', { method: 'DELETE' });
+            fetch(dbUrl + '/photos/' + key + '.json', { method:'DELETE' });
           }
         });
       })
-      .catch(function(err) { setStatus('Errore: ' + err.message, '#ff6060'); });
+      .catch(function(e) { setStatus('Errore: '+e.message,'#900'); });
   }, 1500);
 }
 
-// ── HERO ANIMATION ──────────────────────────────
-var heroOverlay = document.getElementById('hero-overlay');
+// ── HERO ─────────────────────────────────────────────
+var heroEl = document.getElementById('hero-overlay');
 
-function showHero(dataUrl, callback) {
-  // Dimensione hero: 70% dello schermo, aspect portrait
-  var heroW = Math.round(Math.min(window.innerWidth * 0.55, 500));
-  var heroH = Math.round(heroW * 1.35);
+function showHero(dataUrl, cb) {
+  var hw = Math.round(Math.min(window.innerWidth * 0.52, 460));
+  var hh = Math.round(hw * 1.35);
+  var num = String(total+1).padStart(4,'0');
 
-  // Crea finestra Win95
   var win = document.createElement('div');
-  win.className = 'hero-window';
-
+  win.className = 'hero-win';
   win.innerHTML =
-    '<div class="win95" style="width:' + (heroW + 12) + 'px">' +
-      '<div class="win95-titlebar">' +
-        '<div class="win95-title-text"><span class="win95-icon"></span> Photo_' + String(total+1).padStart(4,'0') + '.jpg</div>' +
+    '<div class="win95" style="width:'+(hw+8)+'px">' +
+      '<div class="win95-bar">' +
+        '<div class="win95-bar-left"><span class="win95-dot"></span> PHOTO_'+num+'.JPG</div>' +
         '<div class="win95-btns"><div class="win95-btn">_</div><div class="win95-btn">□</div><div class="win95-btn">✕</div></div>' +
       '</div>' +
-      '<div class="win95-body">' +
-        '<img src="' + dataUrl + '" style="width:' + heroW + 'px;height:' + heroH + 'px;object-fit:cover;display:block;">' +
-      '</div>' +
+      '<div class="win95-body"><img src="'+dataUrl+'" style="width:'+hw+'px;height:'+hh+'px;"></div>' +
     '</div>';
 
-  heroOverlay.innerHTML = '';
-  heroOverlay.appendChild(win);
-
-  // Dopo 2.8s (heroOut dura fino a ~2.8s) lancia callback
-  setTimeout(function() {
-    heroOverlay.innerHTML = '';
-    if (callback) callback();
-  }, 2900);
+  heroEl.innerHTML = '';
+  heroEl.appendChild(win);
+  setTimeout(function() { heroEl.innerHTML = ''; if(cb) cb(); }, 3000);
 }
 
-// ── ADD PHOTO ───────────────────────────────────
+// ── SPAWN FLOATING CARD ───────────────────────────────
 var wall    = document.getElementById('wall');
 var waitEl  = document.getElementById('wait-screen');
 var countEl = document.getElementById('count');
@@ -417,78 +384,125 @@ var flashEl = document.getElementById('flash');
 
 function addPhoto(dataUrl) {
   if (!dataUrl) return;
-  if (firstPhoto) { waitEl.classList.add('hidden'); firstPhoto = false; }
+  if (firstPhoto) { waitEl.classList.add('hidden'); firstPhoto = false; if(!animRunning) startLoop(); }
 
   flashEl.classList.add('on');
-  setTimeout(function() { flashEl.classList.remove('on'); }, 120);
+  setTimeout(function() { flashEl.classList.remove('on'); }, 100);
 
-  // 1) Mostra hero grande al centro
-  showHero(dataUrl, function() {
-    // 2) Dopo hero, lancia nel wall
-    spawnCard(dataUrl);
-  });
+  showHero(dataUrl, function() { spawnCard(dataUrl); });
 }
 
 function spawnCard(dataUrl) {
-  var alive = wall.querySelectorAll('.photo-card:not(.dying)');
-  if (alive.length >= MAX_ON_SCREEN) killCard(alive[0]);
+  // Rimuovi la più vecchia se troppe
+  if (cards.length >= MAX_CARDS) removeCard(cards[0]);
 
-  var W = window.innerWidth, H = window.innerHeight;
-  // Dimensione base della card
-  var baseW = Math.round(Math.random() * 100 + 140);
-  var baseH = Math.round(baseW * (Math.random() * 0.2 + 1.2));
+  var scale = photoSizePct / 100;
+  var w = Math.round(BASE_W * scale);
+  var h = Math.round(w * (0.9 + Math.random() * 0.5)); // ratio variabile
 
-  var x = Math.random() * (W - baseW - 20) + 10;
-  var y = Math.random() * (H - baseH - 80) + 10;
-  var rot = (Math.random() - 0.5) * 14;
+  var WW = wall.offsetWidth  || window.innerWidth;
+  var HH = wall.offsetHeight || window.innerHeight;
 
-  // Offset di entrata dal centro (simula "vola via" dal centro)
-  var cx = W/2 - x - baseW/2;
-  var cy = H/2 - y - baseH/2;
+  // Posizione iniziale casuale (dentro il canvas)
+  var x = Math.random() * (WW - w);
+  var y = Math.random() * (HH - h - 60); // evita il pannello sotto
 
-  var card = document.createElement('div');
-  card.className = 'photo-card';
-  card.dataset.rot = rot;
-  card.style.cssText = [
-    'left:'+x+'px',
-    'top:'+y+'px',
-    'width:'+baseW+'px',
-    'height:'+(baseH+24)+'px',
-    'z-index:'+(100+total),
-    '--r:'+rot+'deg',
-    '--tx:'+cx+'px',
-    '--ty:'+cy+'px',
-  ].join(';');
+  // Velocità casuale (px/frame a 60fps)
+  var speed = 0.8 + Math.random() * 1.2;
+  var angle = Math.random() * Math.PI * 2;
+  var vx = Math.cos(angle) * speed;
+  var vy = Math.sin(angle) * speed;
 
-  // Struttura Win95
-  card.innerHTML =
+  var num = String(total+1).padStart(3,'0');
+
+  var el = document.createElement('div');
+  el.className = 'photo-card';
+  el.style.cssText = 'left:'+x+'px;top:'+y+'px;width:'+w+'px;height:'+(h+20)+'px;';
+  el.innerHTML =
     '<div class="win95" style="width:100%;height:100%;display:flex;flex-direction:column;">' +
-      '<div class="win95-titlebar" style="flex-shrink:0;">' +
-        '<div class="win95-title-text"><span class="win95-icon"></span> foto_' + String(total+1).padStart(3,'0') + '.jpg</div>' +
+      '<div class="win95-bar" style="flex-shrink:0;">' +
+        '<div class="win95-bar-left"><span class="win95-dot"></span> foto_'+num+'.jpg</div>' +
         '<div class="win95-btns"><div class="win95-btn">✕</div></div>' +
       '</div>' +
       '<div class="win95-body" style="flex:1;padding:2px;">' +
-        '<img src="'+dataUrl+'" style="width:100%;height:100%;object-fit:cover;display:block;">' +
+        '<img src="'+dataUrl+'" style="width:100%;height:100%;object-fit:cover;">' +
       '</div>' +
     '</div>';
 
-  wall.appendChild(card);
+  wall.appendChild(el);
 
-  // Dopo settle, applica scala slider
-  setTimeout(function() {
-    card.style.transform = 'rotate('+rot+'deg) scale('+photoScale+')';
-    card.style.transition = 'transform 0.3s ease';
-  }, 550);
+  var obj = { el:el, x:x, y:y, vx:vx, vy:vy, w:w, h:h+20, born:Date.now() };
+  cards.push(obj);
 
   total++;
   countEl.textContent = total;
-  setTimeout(function() { killCard(card); }, PHOTO_LIFE);
+
+  // Morte programmata
+  var life = PHOTO_LIFE;
+  setTimeout(function() { removeCard(obj); }, life);
 }
 
-function killCard(card) {
-  card.classList.add('dying');
-  setTimeout(function() { card.remove(); }, 1900);
+function removeCard(obj) {
+  var idx = cards.indexOf(obj);
+  if (idx === -1) return;
+  cards.splice(idx, 1);
+  obj.el.classList.add('dying');
+  setTimeout(function() { if(obj.el.parentNode) obj.el.parentNode.removeChild(obj.el); }, 1600);
 }
+
+// ── ANIMATION LOOP ────────────────────────────────────
+animRunning = false;
+
+function startLoop() {
+  animRunning = true;
+  requestAnimationFrame(loop);
+}
+
+function loop() {
+  var WW = wall.offsetWidth  || window.innerWidth;
+  var HH = wall.offsetHeight || window.innerHeight;
+  var PANEL_H = 60; // altezza pannello in basso
+
+  for (var i = 0; i < cards.length; i++) {
+    var c = cards[i];
+    if (c.el.classList.contains('dying')) continue;
+
+    c.x += c.vx;
+    c.y += c.vy;
+
+    // Rimbalzo bordi
+    if (c.x <= 0) { c.x = 0; c.vx = Math.abs(c.vx); }
+    if (c.x + c.w >= WW) { c.x = WW - c.w; c.vx = -Math.abs(c.vx); }
+    if (c.y <= 0) { c.y = 0; c.vy = Math.abs(c.vy); }
+    if (c.y + c.h >= HH - PANEL_H) { c.y = HH - PANEL_H - c.h; c.vy = -Math.abs(c.vy); }
+
+    // Rimbalzo tra card (collision semplice)
+    for (var j = i+1; j < cards.length; j++) {
+      var d = cards[j];
+      if (d.el.classList.contains('dying')) continue;
+      var ox = Math.min(c.x+c.w, d.x+d.w) - Math.max(c.x, d.x);
+      var oy = Math.min(c.y+c.h, d.y+d.h) - Math.max(c.y, d.y);
+      if (ox > 0 && oy > 0) {
+        // Scambia velocità sull'asse di minima sovrapposizione
+        if (ox < oy) {
+          var tmp = c.vx; c.vx = d.vx; d.vx = tmp;
+          c.x += c.vx; d.x += d.vx;
+        } else {
+          var tmp = c.vy; c.vy = d.vy; d.vy = tmp;
+          c.y += c.vy; d.y += d.vy;
+        }
+      }
+    }
+
+    c.el.style.left = c.x + 'px';
+    c.el.style.top  = c.y + 'px';
+  }
+
+  requestAnimationFrame(loop);
+}
+
+// Avvia il loop subito (anche senza foto, pronto)
+startLoop();
 </script>
 </body>
 </html>
