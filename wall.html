@@ -32,19 +32,18 @@
 
   /* ── WAIT SCREEN ── */
   #wait-screen {
-    position:absolute; inset:0; z-index:900;
-    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:28px;
-    background:#00B140; transition:opacity 1s ease;
+    position:fixed; inset:0; z-index:9000;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px;
+    background:#111; transition:opacity 0.8s ease;
   }
   #wait-screen.hidden { opacity:0; pointer-events:none; }
-  .logo { font-family:'Bebas Neue',sans-serif; font-size:clamp(48px,10vw,120px); letter-spacing:0.08em; line-height:0.88; color:#fff; text-align:center; text-shadow:2px 2px 0 rgba(0,0,0,0.25); }
-  .logo em { color:#000; font-style:normal; }
-  .qr-wrap { background:#fff; padding:14px; border-top:2px solid #fff; border-left:2px solid #fff; border-right:2px solid #404040; border-bottom:2px solid #404040; box-shadow:2px 2px 0 #000; display:inline-block; line-height:0; }
-  #qr-img { width:180px; height:180px; display:block; }
-  .qr-label { font-size:11px; letter-spacing:0.18em; text-transform:uppercase; color:rgba(0,0,0,0.5); text-align:center; margin-top:8px; }
-  .pulse { display:flex; gap:8px; align-items:center; font-size:11px; letter-spacing:0.15em; text-transform:uppercase; color:rgba(0,0,0,0.45); }
-  .pulse-dot { width:6px; height:6px; border-radius:50%; background:#000; animation:pd 1.4s ease-in-out infinite; }
-  @keyframes pd { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.2;transform:scale(0.5)} }
+  .qr-wrap {
+    background:#fff; padding:16px;
+    border-top:2px solid #fff; border-left:2px solid #fff;
+    border-right:2px solid #404040; border-bottom:2px solid #404040;
+    box-shadow:2px 2px 0 #000; display:inline-block; line-height:0;
+  }
+  #qr-img { display:block; width:min(60vmin, 420px); height:min(60vmin, 420px); }
 
   /* ── WIN95 ── */
   .win95 {
@@ -178,19 +177,15 @@
   <div class="cfg-note">Salvato in locale · <span style="color:rgba(255,220,0,.7);cursor:pointer" onclick="localStorage.removeItem('dj_db_url');location.reload()">reset</span></div>
 </div>
 
+<!-- WAIT SCREEN (fuori dal canvas, overlay a tutto schermo) -->
+<div id="wait-screen">
+  <div class="qr-wrap"><img id="qr-img" src="" alt="QR"></div>
+</div>
+
 <!-- CANVAS (il wall vero) -->
 <div id="canvas">
-  <!-- WAIT -->
-  <div id="wait-screen">
-    <div class="logo">SHOOT<br>THE<br><em>NIGHT</em></div>
-    <div>
-      <div class="qr-wrap"><img id="qr-img" src="" alt="QR"></div>
-      <div class="qr-label">Scansiona &amp; invia la tua foto</div>
-    </div>
-    <div class="pulse"><div class="pulse-dot"></div><span id="status-msg">In attesa…</span></div>
-  </div>
-  <!-- WALL PHOTOS -->
   <div id="wall"></div>
+  <span id="status-msg" style="display:none"></span>
   <div id="flash"></div>
 </div>
 
@@ -305,8 +300,8 @@ function startWall(dbUrl) {
   var base = location.href.replace(/wall\.html.*$/, '');
   var camUrl = base + 'camera.html?db=' + encodeURIComponent(dbUrl);
   var qr = document.getElementById('qr-img');
-  qr.src = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=10&data=' + encodeURIComponent(camUrl);
-  qr.onerror = function() { qr.src = 'https://quickchart.io/qr?size=180&text=' + encodeURIComponent(camUrl); };
+  qr.src = 'https://api.qrserver.com/v1/create-qr-code/?size=500x500&margin=10&data=' + encodeURIComponent(camUrl);
+  qr.onerror = function() { qr.src = 'https://quickchart.io/qr?size=500&text=' + encodeURIComponent(camUrl); };
   listenPhotos(dbUrl);
 }
 
