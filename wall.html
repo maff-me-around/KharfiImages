@@ -8,47 +8,43 @@
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
 
-  body {
-    background: #00B140;
-    overflow: hidden;
-    width: 100vw;
-    height: 100vh;
-    font-family: 'Courier New', monospace;
+  html, body {
+    width:100%; height:100%;
+    background:#111;
+    overflow:hidden;
+    font-family:'Courier New', monospace;
   }
 
-  /* scanlines */
-  body::before {
-    content:''; position:fixed; inset:0; pointer-events:none; z-index:1;
-    background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.04) 3px,rgba(0,0,0,0.04) 4px);
+  /* ── CANVAS AREA ── */
+  #canvas {
+    position:absolute;
+    top:50%; left:50%;
+    transform:translate(-50%, -50%);
+    background:#00B140;
+    overflow:hidden;
+    /* border Win95 style */
+    border-top:3px solid #fff;
+    border-left:3px solid #fff;
+    border-right:3px solid #404040;
+    border-bottom:3px solid #404040;
+    box-shadow:3px 3px 0 #000, 0 0 0 1px #000;
   }
 
   /* ── WAIT SCREEN ── */
   #wait-screen {
-    position:fixed; inset:0; z-index:900;
+    position:absolute; inset:0; z-index:900;
     display:flex; flex-direction:column; align-items:center; justify-content:center; gap:28px;
     background:#00B140; transition:opacity 1s ease;
   }
   #wait-screen.hidden { opacity:0; pointer-events:none; }
-  .logo { font-family:'Bebas Neue',sans-serif; font-size:clamp(56px,11vw,130px); letter-spacing:0.08em; line-height:0.88; color:#fff; text-align:center; text-shadow:2px 2px 0 rgba(0,0,0,0.3); }
+  .logo { font-family:'Bebas Neue',sans-serif; font-size:clamp(48px,10vw,120px); letter-spacing:0.08em; line-height:0.88; color:#fff; text-align:center; text-shadow:2px 2px 0 rgba(0,0,0,0.25); }
   .logo em { color:#000; font-style:normal; }
   .qr-wrap { background:#fff; padding:14px; border-top:2px solid #fff; border-left:2px solid #fff; border-right:2px solid #404040; border-bottom:2px solid #404040; box-shadow:2px 2px 0 #000; display:inline-block; line-height:0; }
   #qr-img { width:180px; height:180px; display:block; }
-  .qr-label { font-size:11px; letter-spacing:0.2em; text-transform:uppercase; color:rgba(0,0,0,0.5); text-align:center; margin-top:8px; }
+  .qr-label { font-size:11px; letter-spacing:0.18em; text-transform:uppercase; color:rgba(0,0,0,0.5); text-align:center; margin-top:8px; }
   .pulse { display:flex; gap:8px; align-items:center; font-size:11px; letter-spacing:0.15em; text-transform:uppercase; color:rgba(0,0,0,0.45); }
   .pulse-dot { width:6px; height:6px; border-radius:50%; background:#000; animation:pd 1.4s ease-in-out infinite; }
   @keyframes pd { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.2;transform:scale(0.5)} }
-
-  /* ── HERO ── */
-  #hero-overlay {
-    position:fixed; inset:0; z-index:800;
-    display:flex; align-items:center; justify-content:center;
-    pointer-events:none;
-  }
-  .hero-win {
-    animation: hIn .35s cubic-bezier(.22,1,.36,1) forwards, hOut .5s ease 2.3s forwards;
-  }
-  @keyframes hIn  { from{opacity:0;transform:scale(.5)} to{opacity:1;transform:scale(1)} }
-  @keyframes hOut { from{opacity:1;transform:scale(1)} to{opacity:0;transform:scale(.25) translateY(80px)} }
 
   /* ── WIN95 ── */
   .win95 {
@@ -61,12 +57,13 @@
     background:linear-gradient(90deg,#000080,#1084d0);
     color:#fff; padding:2px 4px;
     display:flex; align-items:center; justify-content:space-between;
-    font-size:11px; font-weight:bold; font-family:'Courier New',monospace;
-    user-select:none; white-space:nowrap;
+    font-size:11px; font-weight:bold;
+    user-select:none; white-space:nowrap; overflow:hidden;
   }
-  .win95-bar-left { display:flex; align-items:center; gap:3px; }
-  .win95-dot { width:12px; height:12px; background:#ff2060; display:inline-block; flex-shrink:0; }
-  .win95-btns { display:flex; gap:2px; }
+  .win95-bar-left { display:flex; align-items:center; gap:3px; overflow:hidden; }
+  .win95-dot { width:12px; height:12px; flex-shrink:0; background:#ff2060; display:inline-block; }
+  .win95-bar-left span:last-child { overflow:hidden; text-overflow:ellipsis; }
+  .win95-btns { display:flex; gap:2px; flex-shrink:0; }
   .win95-btn {
     width:15px; height:13px; background:#c0c0c0;
     border-top:1px solid #fff; border-left:1px solid #fff;
@@ -76,38 +73,34 @@
   .win95-body {
     border-top:2px solid #404040; border-left:2px solid #404040;
     border-right:2px solid #fff; border-bottom:2px solid #fff;
-    padding:2px; background:#c0c0c0; line-height:0;
+    padding:2px; background:#c0c0c0; line-height:0; overflow:hidden;
   }
-  .win95-body img { display:block; object-fit:cover; }
+  .win95-body img { display:block; width:100%; height:100%; object-fit:cover; }
 
   /* ── FLOATING CARDS ── */
-  #wall { position:fixed; inset:0; z-index:10; overflow:hidden; }
-
   .photo-card {
     position:absolute;
-    cursor:default;
-    transition: box-shadow .2s;
-  }
-  .photo-card:hover .win95 {
-    box-shadow:4px 4px 0 #000, 0 0 20px rgba(0,0,0,0.3);
+    transform-origin:center center;
+    /* transition only for scale changes from slider, NOT for position (handled by JS) */
+    transition:transform 0.35s ease;
+    will-change:transform, left, top;
   }
   .photo-card.dying {
-    animation: cardDie 1.5s ease forwards;
-  }
-  @keyframes cardDie {
-    to { opacity:0; transform:scale(0.7); filter:blur(4px); }
+    transition:opacity 1.5s ease, transform 1.5s ease !important;
+    opacity:0 !important;
+    transform:scale(0.6) !important;
   }
 
   /* ── FLASH ── */
-  #flash { position:fixed; inset:0; background:#fff; opacity:0; pointer-events:none; z-index:850; transition:opacity .05s; }
-  #flash.on { opacity:.12; }
+  #flash { position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none; z-index:850; transition:opacity .05s; }
+  #flash.on { opacity:.1; }
 
   /* ── COUNTER ── */
   #counter {
     position:fixed; top:12px; right:16px; z-index:950;
-    font-family:'Courier New',monospace; font-size:11px; color:rgba(0,0,0,0.35);
+    font-family:'Courier New',monospace; font-size:11px; color:rgba(255,255,255,0.4);
   }
-  #counter b { color:#000; }
+  #counter b { color:#fff; }
 
   /* ── CONTROL PANEL ── */
   #ctrl-panel {
@@ -119,57 +112,57 @@
     border-top:2px solid #fff; border-left:2px solid #fff;
     border-right:2px solid #404040; border-bottom:2px solid #404040;
     box-shadow:2px 2px 0 #000;
-    min-width:520px;
   }
   .ctrl-bar {
     background:linear-gradient(90deg,#000080,#1084d0);
     color:#fff; padding:2px 6px; font-size:11px; font-weight:bold;
-    font-family:'Courier New',monospace;
     display:flex; align-items:center; gap:4px;
   }
   .ctrl-body {
-    padding:8px 12px; display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+    padding:6px 10px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;
   }
-  .ctrl-field { display:flex; align-items:center; gap:5px; font-size:11px; color:#000; }
-  .ctrl-field label { white-space:nowrap; }
-  .ctrl-field input[type=number], .ctrl-field input[type=range] {
-    font-family:'Courier New',monospace; font-size:11px;
-  }
-  .ctrl-field input[type=number] {
-    width:56px; padding:1px 4px; background:#fff;
+  .cf { display:flex; align-items:center; gap:4px; font-size:11px; color:#000; white-space:nowrap; }
+  .cf input[type=number] {
+    width:52px; padding:1px 3px; background:#fff; font-family:'Courier New',monospace; font-size:11px;
     border-top:2px solid #404040; border-left:2px solid #404040;
-    border-right:2px solid #fff; border-bottom:2px solid #fff;
-    outline:none;
+    border-right:2px solid #fff; border-bottom:2px solid #fff; outline:none;
   }
-  .ctrl-field input[type=range] {
-    width:100px; -webkit-appearance:none; appearance:none; height:4px;
+  .cf input[type=range] {
+    width:90px; -webkit-appearance:none; appearance:none; height:4px;
     background:#808080; border-top:1px solid #404040; border-left:1px solid #404040;
     border-right:1px solid #fff; border-bottom:1px solid #fff; outline:none; cursor:pointer;
   }
-  .ctrl-field input[type=range]::-webkit-slider-thumb {
+  .cf input[type=range]::-webkit-slider-thumb {
     -webkit-appearance:none; width:11px; height:18px; background:#c0c0c0;
     border-top:2px solid #fff; border-left:2px solid #fff;
     border-right:2px solid #404040; border-bottom:2px solid #404040; cursor:pointer;
   }
-  .ctrl-sep { width:1px; height:28px; background:#808080; border-right:1px solid #fff; }
-  .ctrl-btn {
-    padding:2px 10px; background:#c0c0c0; cursor:pointer; font-family:'Courier New',monospace; font-size:11px;
+  .cf input[type=range]::-moz-range-thumb {
+    width:11px; height:18px; background:#c0c0c0; border-radius:0;
     border-top:2px solid #fff; border-left:2px solid #fff;
-    border-right:2px solid #404040; border-bottom:2px solid #404040;
-    white-space:nowrap;
+    border-right:2px solid #404040; border-bottom:2px solid #404040; cursor:pointer;
   }
-  .ctrl-btn:active { border-top:2px solid #404040; border-left:2px solid #404040; border-right:2px solid #fff; border-bottom:2px solid #fff; }
+  .csep { width:1px; height:26px; background:#808080; border-right:1px solid #fff; margin:0 2px; }
+  .cbtn {
+    padding:2px 8px; background:#c0c0c0; cursor:pointer; font-family:'Courier New',monospace; font-size:11px;
+    border-top:2px solid #fff; border-left:2px solid #fff;
+    border-right:2px solid #404040; border-bottom:2px solid #404040; white-space:nowrap;
+  }
+  .cbtn:active {
+    border-top:2px solid #404040; border-left:2px solid #404040;
+    border-right:2px solid #fff; border-bottom:2px solid #fff;
+  }
 
   /* ── CONFIG OVERLAY ── */
   #config-overlay {
-    position:fixed; inset:0; background:rgba(0,90,32,0.97);
+    position:fixed; inset:0; background:rgba(0,80,25,0.97);
     display:flex; flex-direction:column; align-items:center; justify-content:center;
     gap:16px; z-index:9999; padding:32px;
   }
   #config-overlay.hidden { display:none; }
   .cfg-title { font-family:'Bebas Neue',sans-serif; font-size:32px; letter-spacing:.1em; color:#fff; }
-  .cfg-sub { font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:rgba(255,255,255,.5); text-align:center; line-height:2; }
-  .cfg-input { width:100%; max-width:500px; padding:12px 14px; background:#fff; border-top:2px solid #404040; border-left:2px solid #404040; border-right:2px solid #fff; border-bottom:2px solid #fff; font-size:13px; outline:none; font-family:'Courier New',monospace; }
+  .cfg-sub { font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:rgba(255,255,255,.45); text-align:center; line-height:2; }
+  .cfg-input { width:100%; max-width:500px; padding:10px 12px; background:#fff; border-top:2px solid #404040; border-left:2px solid #404040; border-right:2px solid #fff; border-bottom:2px solid #fff; font-size:13px; outline:none; font-family:'Courier New',monospace; }
   .cfg-btn { padding:10px 36px; background:#c0c0c0; border-top:2px solid #fff; border-left:2px solid #fff; border-right:2px solid #404040; border-bottom:2px solid #404040; font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:.15em; cursor:pointer; }
   .cfg-note { font-size:11px; color:rgba(255,255,255,.3); text-align:center; }
 </style>
@@ -182,25 +175,25 @@
   <div class="cfg-sub">Incolla il Firebase Realtime Database URL</div>
   <input class="cfg-input" id="db-url-input" type="url" placeholder="https://nome-default-rtdb.firebaseio.com">
   <button class="cfg-btn" onclick="saveConfig()">AVVIA WALL</button>
-  <div class="cfg-note">Salvato in locale · <span style="color:rgba(255,200,0,.7);cursor:pointer" onclick="localStorage.removeItem('dj_db_url');location.reload()">reset</span></div>
+  <div class="cfg-note">Salvato in locale · <span style="color:rgba(255,220,0,.7);cursor:pointer" onclick="localStorage.removeItem('dj_db_url');location.reload()">reset</span></div>
 </div>
 
-<!-- WAIT -->
-<div id="wait-screen">
-  <div class="logo">SHOOT<br>THE<br><em>NIGHT</em></div>
-  <div>
-    <div class="qr-wrap"><img id="qr-img" src="" alt="QR"></div>
-    <div class="qr-label">Scansiona &amp; invia la tua foto</div>
+<!-- CANVAS (il wall vero) -->
+<div id="canvas">
+  <!-- WAIT -->
+  <div id="wait-screen">
+    <div class="logo">SHOOT<br>THE<br><em>NIGHT</em></div>
+    <div>
+      <div class="qr-wrap"><img id="qr-img" src="" alt="QR"></div>
+      <div class="qr-label">Scansiona &amp; invia la tua foto</div>
+    </div>
+    <div class="pulse"><div class="pulse-dot"></div><span id="status-msg">In attesa…</span></div>
   </div>
-  <div class="pulse"><div class="pulse-dot"></div><span id="status-msg">In attesa…</span></div>
+  <!-- WALL PHOTOS -->
+  <div id="wall"></div>
+  <div id="flash"></div>
 </div>
 
-<!-- HERO -->
-<div id="hero-overlay"></div>
-
-<!-- WALL -->
-<div id="wall"></div>
-<div id="flash"></div>
 <div id="counter">Foto <b id="count">0</b></div>
 
 <!-- CONTROL PANEL -->
@@ -208,98 +201,92 @@
   <div class="ctrl-win">
     <div class="ctrl-bar">⚙ Display Properties</div>
     <div class="ctrl-body">
-
-      <div class="ctrl-field">
-        <label>Dimensione:</label>
-        <input type="range" id="sl-size" min="30" max="300" value="100">
-        <input type="number" id="in-size" min="30" max="300" value="100">
+      <div class="cf">
+        <label>Foto:</label>
+        <input type="range" id="sl-size" min="20" max="300" value="100">
+        <input type="number" id="in-size" min="20" max="300" value="100">
         <label>%</label>
       </div>
-
-      <div class="ctrl-sep"></div>
-
-      <div class="ctrl-field">
+      <div class="csep"></div>
+      <div class="cf">
         <label>Canvas W:</label>
-        <input type="number" id="in-w" placeholder="auto" min="400" max="7680">
-        <label>px</label>
-      </div>
-      <div class="ctrl-field">
+        <input type="number" id="in-cw" placeholder="auto" min="400" max="7680">
         <label>H:</label>
-        <input type="number" id="in-h" placeholder="auto" min="300" max="4320">
+        <input type="number" id="in-ch" placeholder="auto" min="300" max="4320">
         <label>px</label>
+        <button class="cbtn" onclick="applyCanvas()">Apply</button>
       </div>
-      <button class="ctrl-btn" onclick="applyCanvas()">Apply</button>
-
-      <div class="ctrl-sep"></div>
-
-      <div class="ctrl-field">
+      <div class="csep"></div>
+      <div class="cf">
         <label>Durata:</label>
-        <input type="number" id="in-life" min="5" max="120" value="22">
+        <input type="number" id="in-life" min="3" max="120" value="22">
         <label>sec</label>
+        <button class="cbtn" onclick="applyLife()">Apply</button>
       </div>
-      <button class="ctrl-btn" onclick="applyLife()">Apply</button>
-
     </div>
   </div>
 </div>
 
 <script>
-// ── STATE ────────────────────────────────────────────
-var PHOTO_LIFE    = 22000;
-var MAX_CARDS     = 14;
-var photoSizePct  = 100;   // % rispetto alla base
-var BASE_W        = 160;   // larghezza base foto in px
-var cards         = [];    // [{el, x, y, vx, vy, w, h}]
-var total         = 0;
-var firstPhoto    = true;
-var seenKeys      = {};
-var animRunning   = false;
+// ─── CONFIG ──────────────────────────────────────────────
+var PHOTO_LIFE   = 22000;
+var MAX_CARDS    = 14;
+var BASE_W       = 170;   // larghezza base card in px (a 100%)
+var photoScale   = 1.0;   // scala corrente (da slider)
+var cards        = [];
+var total        = 0;
+var firstPhoto   = true;
+var seenKeys     = {};
 
-// ── CONTROLS ─────────────────────────────────────────
-var slSize  = document.getElementById('sl-size');
-var inSize  = document.getElementById('in-size');
-var inW     = document.getElementById('in-w');
-var inH     = document.getElementById('in-h');
-var inLife  = document.getElementById('in-life');
+// ─── CANVAS SETUP ────────────────────────────────────────
+var canvasEl = document.getElementById('canvas');
+var wallEl   = document.getElementById('wall');
 
-// Slider ↔ input sync
-slSize.addEventListener('input', function() {
-  inSize.value = this.value;
-  photoSizePct = parseInt(this.value);
-  resizeAllCards();
-});
-inSize.addEventListener('change', function() {
-  var v = Math.min(300, Math.max(30, parseInt(this.value)||100));
-  this.value = v; slSize.value = v;
-  photoSizePct = v;
-  resizeAllCards();
-});
-
-function resizeAllCards() {
-  var scale = photoSizePct / 100;
-  cards.forEach(function(c) {
-    c.w = Math.round(BASE_W * scale);
-    c.h = Math.round(c.w * 1.3);
-    c.el.style.width  = c.w + 'px';
-    c.el.style.height = c.h + 'px';
-  });
+// Default: riempi la finestra del browser
+function setCanvasSize(w, h) {
+  canvasEl.style.width  = (w || window.innerWidth)  + 'px';
+  canvasEl.style.height = (h || window.innerHeight) + 'px';
 }
+setCanvasSize();
+window.addEventListener('resize', function() {
+  var cw = parseInt(document.getElementById('in-cw').value) || 0;
+  var ch = parseInt(document.getElementById('in-ch').value) || 0;
+  if (!cw && !ch) setCanvasSize();
+});
 
 function applyCanvas() {
-  var w = parseInt(inW.value) || 0;
-  var h = parseInt(inH.value) || 0;
-  document.body.style.width  = w > 0 ? w+'px' : '100vw';
-  document.body.style.height = h > 0 ? h+'px' : '100vh';
-  document.getElementById('wall').style.width  = w > 0 ? w+'px' : '100%';
-  document.getElementById('wall').style.height = h > 0 ? h+'px' : '100%';
+  var cw = parseInt(document.getElementById('in-cw').value) || 0;
+  var ch = parseInt(document.getElementById('in-ch').value) || 0;
+  setCanvasSize(cw || null, ch || null);
 }
 
 function applyLife() {
-  var v = parseInt(inLife.value) || 22;
-  PHOTO_LIFE = Math.max(5, v) * 1000;
+  var v = parseInt(document.getElementById('in-life').value) || 22;
+  PHOTO_LIFE = Math.max(3, v) * 1000;
 }
 
-// ── CONFIG ───────────────────────────────────────────
+// ─── SLIDER ──────────────────────────────────────────────
+var slSize = document.getElementById('sl-size');
+var inSize = document.getElementById('in-size');
+
+function applyScale(val) {
+  val = Math.min(300, Math.max(20, parseInt(val) || 100));
+  photoScale = val / 100;
+  slSize.value = val;
+  inSize.value = val;
+  // Aggiorna tutte le card esistenti — centrato perché transform-origin:center center
+  cards.forEach(function(c) {
+    if (!c.el.classList.contains('dying')) {
+      c.el.style.transform = 'scale(' + photoScale + ')';
+    }
+  });
+}
+
+slSize.addEventListener('input',  function() { applyScale(this.value); });
+inSize.addEventListener('change', function() { applyScale(this.value); });
+inSize.addEventListener('keydown', function(e) { if (e.key==='Enter') applyScale(this.value); });
+
+// ─── FIREBASE CONFIG ─────────────────────────────────────
 var saved = localStorage.getItem('dj_db_url');
 if (saved) {
   document.getElementById('config-overlay').classList.add('hidden');
@@ -323,7 +310,7 @@ function startWall(dbUrl) {
   listenPhotos(dbUrl);
 }
 
-// ── FIREBASE ─────────────────────────────────────────
+// ─── FIREBASE POLLING ────────────────────────────────────
 function setStatus(msg, col) {
   var el = document.getElementById('status-msg');
   if (el) { el.textContent = msg; el.style.color = col || 'rgba(0,0,0,0.4)'; }
@@ -352,157 +339,156 @@ function listenPhotos(dbUrl) {
   }, 1500);
 }
 
-// ── HERO ─────────────────────────────────────────────
-var heroEl = document.getElementById('hero-overlay');
-
-function showHero(dataUrl, cb) {
-  var hw = Math.round(Math.min(window.innerWidth * 0.52, 460));
-  var hh = Math.round(hw * 1.35);
-  var num = String(total+1).padStart(4,'0');
-
-  var win = document.createElement('div');
-  win.className = 'hero-win';
-  win.innerHTML =
-    '<div class="win95" style="width:'+(hw+8)+'px">' +
-      '<div class="win95-bar">' +
-        '<div class="win95-bar-left"><span class="win95-dot"></span> PHOTO_'+num+'.JPG</div>' +
-        '<div class="win95-btns"><div class="win95-btn">_</div><div class="win95-btn">□</div><div class="win95-btn">✕</div></div>' +
-      '</div>' +
-      '<div class="win95-body"><img src="'+dataUrl+'" style="width:'+hw+'px;height:'+hh+'px;"></div>' +
-    '</div>';
-
-  heroEl.innerHTML = '';
-  heroEl.appendChild(win);
-  setTimeout(function() { heroEl.innerHTML = ''; if(cb) cb(); }, 3000);
-}
-
-// ── SPAWN FLOATING CARD ───────────────────────────────
-var wall    = document.getElementById('wall');
+// ─── HERO → SPAWN ────────────────────────────────────────
+// La card viene creata subito al centro (grande), poi si anima
+// verso la posizione finale rimpicciolendosi con CSS transition.
+var flashEl = document.getElementById('flash');
 var waitEl  = document.getElementById('wait-screen');
 var countEl = document.getElementById('count');
-var flashEl = document.getElementById('flash');
 
 function addPhoto(dataUrl) {
   if (!dataUrl) return;
-  if (firstPhoto) { waitEl.classList.add('hidden'); firstPhoto = false; if(!animRunning) startLoop(); }
+  if (firstPhoto) { waitEl.classList.add('hidden'); firstPhoto = false; }
 
   flashEl.classList.add('on');
   setTimeout(function() { flashEl.classList.remove('on'); }, 100);
 
-  showHero(dataUrl, function() { spawnCard(dataUrl); });
-}
-
-function spawnCard(dataUrl) {
-  // Rimuovi la più vecchia se troppe
   if (cards.length >= MAX_CARDS) removeCard(cards[0]);
 
-  var scale = photoSizePct / 100;
-  var w = Math.round(BASE_W * scale);
-  var h = Math.round(w * (0.9 + Math.random() * 0.5)); // ratio variabile
+  var WW = canvasEl.offsetWidth;
+  var HH = canvasEl.offsetHeight;
+  var PANEL_H = 60;
 
-  var WW = wall.offsetWidth  || window.innerWidth;
-  var HH = wall.offsetHeight || window.innerHeight;
+  // Dimensione card in px (base * slider)
+  var cardW = Math.round(BASE_W * photoScale);
+  var cardH = Math.round(cardW * (1.0 + Math.random() * 0.5) + 20); // +20 titlebar
 
-  // Posizione iniziale casuale (dentro il canvas)
-  var x = Math.random() * (WW - w);
-  var y = Math.random() * (HH - h - 60); // evita il pannello sotto
+  // Posizione finale casuale
+  var finalX = Math.random() * (WW - cardW - 10) + 5;
+  var finalY = Math.random() * (HH - cardH - PANEL_H - 5) + 5;
 
-  // Velocità casuale (px/frame a 60fps)
-  var speed = 0.8 + Math.random() * 1.2;
-  var angle = Math.random() * Math.PI * 2;
-  var vx = Math.cos(angle) * speed;
-  var vy = Math.sin(angle) * speed;
+  // Posizione iniziale = centro canvas, scalata grande
+  var heroScale = Math.min(WW, HH) * 0.55 / cardW; // quanto dev'essere grande al centro
+  var startX = (WW - cardW) / 2;
+  var startY = (HH - cardH) / 2;
 
-  var num = String(total+1).padStart(3,'0');
+  var num = String(total + 1).padStart(3, '0');
 
   var el = document.createElement('div');
   el.className = 'photo-card';
-  el.style.cssText = 'left:'+x+'px;top:'+y+'px;width:'+w+'px;height:'+(h+20)+'px;';
+  // Posizione iniziale = centro; transform = grande
+  el.style.cssText = [
+    'left:' + startX + 'px',
+    'top:' + startY + 'px',
+    'width:' + cardW + 'px',
+    'height:' + cardH + 'px',
+    'transform:scale(' + heroScale + ')',
+    'z-index:' + (100 + total),
+    // transizione per l'animazione hero→small
+    'transition:transform 0.7s cubic-bezier(.4,0,.2,1), left 0.7s cubic-bezier(.4,0,.2,1), top 0.7s cubic-bezier(.4,0,.2,1)',
+  ].join(';');
+
   el.innerHTML =
     '<div class="win95" style="width:100%;height:100%;display:flex;flex-direction:column;">' +
       '<div class="win95-bar" style="flex-shrink:0;">' +
-        '<div class="win95-bar-left"><span class="win95-dot"></span> foto_'+num+'.jpg</div>' +
-        '<div class="win95-btns"><div class="win95-btn">✕</div></div>' +
+        '<div class="win95-bar-left"><span class="win95-dot"></span><span>foto_' + num + '.jpg</span></div>' +
+        '<div class="win95-btns"><div class="win95-btn">_</div><div class="win95-btn">□</div><div class="win95-btn">✕</div></div>' +
       '</div>' +
-      '<div class="win95-body" style="flex:1;padding:2px;">' +
-        '<img src="'+dataUrl+'" style="width:100%;height:100%;object-fit:cover;">' +
+      '<div class="win95-body" style="flex:1;">' +
+        '<img src="' + dataUrl + '">' +
       '</div>' +
     '</div>';
 
-  wall.appendChild(el);
-
-  var obj = { el:el, x:x, y:y, vx:vx, vy:vy, w:w, h:h+20, born:Date.now() };
-  cards.push(obj);
-
+  wallEl.appendChild(el);
   total++;
   countEl.textContent = total;
 
+  // Velocità per il bounce
+  var speed = 0.7 + Math.random() * 1.1;
+  var angle = Math.random() * Math.PI * 2;
+
+  var obj = {
+    el: el,
+    x: startX, y: startY,
+    vx: Math.cos(angle) * speed,
+    vy: Math.sin(angle) * speed,
+    w: cardW, h: cardH,
+    animating: true   // true = in fase hero, non fluttua ancora
+  };
+  cards.push(obj);
+
+  // Dopo 1 frame, anima verso posizione finale e scala normale
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      el.style.left      = finalX + 'px';
+      el.style.top       = finalY + 'px';
+      el.style.transform = 'scale(' + photoScale + ')';
+      obj.x = finalX;
+      obj.y = finalY;
+
+      // Quando l'animazione finisce, passa al controllo JS (bounce)
+      setTimeout(function() {
+        obj.animating = false;
+        // Rimuovi la transition position — da qui la gestisce il loop
+        el.style.transition = 'transform 0.35s ease';
+      }, 750);
+    });
+  });
+
   // Morte programmata
-  var life = PHOTO_LIFE;
-  setTimeout(function() { removeCard(obj); }, life);
+  setTimeout(function() { removeCard(obj); }, PHOTO_LIFE);
 }
 
 function removeCard(obj) {
   var idx = cards.indexOf(obj);
   if (idx === -1) return;
   cards.splice(idx, 1);
-  obj.el.classList.add('dying');
-  setTimeout(function() { if(obj.el.parentNode) obj.el.parentNode.removeChild(obj.el); }, 1600);
+  obj.animating = true; // blocca il loop
+  obj.el.style.transition = 'opacity 1.4s ease, transform 1.4s ease';
+  obj.el.style.opacity = '0';
+  obj.el.style.transform = 'scale(0.55)';
+  setTimeout(function() { if (obj.el.parentNode) obj.el.parentNode.removeChild(obj.el); }, 1500);
 }
 
-// ── ANIMATION LOOP ────────────────────────────────────
-animRunning = false;
-
-function startLoop() {
-  animRunning = true;
-  requestAnimationFrame(loop);
-}
-
+// ─── ANIMATION LOOP (bounce) ─────────────────────────────
 function loop() {
-  var WW = wall.offsetWidth  || window.innerWidth;
-  var HH = wall.offsetHeight || window.innerHeight;
-  var PANEL_H = 60; // altezza pannello in basso
+  var WW = canvasEl.offsetWidth;
+  var HH = canvasEl.offsetHeight;
+  var PAD = 60; // pannello in basso
 
   for (var i = 0; i < cards.length; i++) {
     var c = cards[i];
-    if (c.el.classList.contains('dying')) continue;
+    if (c.animating) continue;
 
     c.x += c.vx;
     c.y += c.vy;
 
-    // Rimbalzo bordi
-    if (c.x <= 0) { c.x = 0; c.vx = Math.abs(c.vx); }
-    if (c.x + c.w >= WW) { c.x = WW - c.w; c.vx = -Math.abs(c.vx); }
-    if (c.y <= 0) { c.y = 0; c.vy = Math.abs(c.vy); }
-    if (c.y + c.h >= HH - PANEL_H) { c.y = HH - PANEL_H - c.h; c.vy = -Math.abs(c.vy); }
+    // Bordi
+    if (c.x <= 0)            { c.x = 0;          c.vx =  Math.abs(c.vx); }
+    if (c.x + c.w >= WW)     { c.x = WW - c.w;   c.vx = -Math.abs(c.vx); }
+    if (c.y <= 0)            { c.y = 0;          c.vy =  Math.abs(c.vy); }
+    if (c.y + c.h >= HH-PAD) { c.y = HH-PAD-c.h; c.vy = -Math.abs(c.vy); }
 
-    // Rimbalzo tra card (collision semplice)
-    for (var j = i+1; j < cards.length; j++) {
+    // Collisioni tra card
+    for (var j = i + 1; j < cards.length; j++) {
       var d = cards[j];
-      if (d.el.classList.contains('dying')) continue;
+      if (d.animating) continue;
       var ox = Math.min(c.x+c.w, d.x+d.w) - Math.max(c.x, d.x);
       var oy = Math.min(c.y+c.h, d.y+d.h) - Math.max(c.y, d.y);
       if (ox > 0 && oy > 0) {
-        // Scambia velocità sull'asse di minima sovrapposizione
-        if (ox < oy) {
-          var tmp = c.vx; c.vx = d.vx; d.vx = tmp;
-          c.x += c.vx; d.x += d.vx;
-        } else {
-          var tmp = c.vy; c.vy = d.vy; d.vy = tmp;
-          c.y += c.vy; d.y += d.vy;
-        }
+        if (ox < oy) { var t=c.vx; c.vx=d.vx; d.vx=t; c.x+=c.vx; d.x+=d.vx; }
+        else         { var t=c.vy; c.vy=d.vy; d.vy=t; c.y+=c.vy; d.y+=d.vy; }
       }
     }
 
+    // Aggiorna posizione senza transition (già rimossa dopo hero)
     c.el.style.left = c.x + 'px';
     c.el.style.top  = c.y + 'px';
   }
 
   requestAnimationFrame(loop);
 }
-
-// Avvia il loop subito (anche senza foto, pronto)
-startLoop();
+requestAnimationFrame(loop);
 </script>
 </body>
 </html>
