@@ -4,123 +4,384 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>SCATTA</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
 <style>
-  :root { --pink:#ff2060; --dark:#05050a; }
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
   body {
-    background:var(--dark); color:#fff; font-family:'Syne',sans-serif;
-    height:100dvh; overflow:hidden;
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    background:#008080; /* classico teal Win95 */
+    height:100dvh;
+    overflow:hidden;
+    font-family:'Courier New', monospace;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding:10px;
   }
 
+  /* ── SCREENS ── */
   .screen { display:none; flex-direction:column; align-items:center; width:100%; height:100%; }
   .screen.active { display:flex; }
 
-  /* LOADING */
-  #screen-loading { justify-content:center; gap:20px; }
-  .brand { font-family:'Bebas Neue',sans-serif; font-size:clamp(48px,16vw,80px); letter-spacing:0.1em; color:#fff; line-height:1; text-align:center; }
-  .brand em { color:var(--pink); font-style:normal; }
-  .spinner { width:28px; height:28px; border:2px solid rgba(255,255,255,0.08); border-top-color:var(--pink); border-radius:50%; animation:spin 0.8s linear infinite; }
-  @keyframes spin { to{transform:rotate(360deg)} }
-  .status-text { font-size:11px; letter-spacing:0.25em; text-transform:uppercase; color:rgba(255,255,255,0.3); }
+  /* ── WIN95 BASE ── */
+  .win95 {
+    background:#c0c0c0;
+    border-top:2px solid #fff;
+    border-left:2px solid #fff;
+    border-right:2px solid #404040;
+    border-bottom:2px solid #404040;
+    box-shadow:2px 2px 0 #000;
+    width:100%;
+    max-width:400px;
+  }
 
-  /* CAMERA */
-  #screen-camera { justify-content:flex-start; position:relative; }
-  #viewfinder { width:100%; flex:1; object-fit:cover; background:#000; transform:scaleX(-1); }
-  .cam-hint { font-size:10px; letter-spacing:0.2em; text-transform:uppercase; color:rgba(255,255,255,0.3); text-align:center; position:absolute; top:14px; left:50%; transform:translateX(-50%); white-space:nowrap; }
-  .cam-ui { width:100%; padding:24px 24px 36px; display:flex; align-items:center; justify-content:center; background:var(--dark); }
-  .shutter { width:72px; height:72px; border-radius:50%; background:#fff; border:3px solid rgba(255,255,255,0.15); position:relative; cursor:pointer; transition:transform 0.1s,background 0.1s; box-shadow:0 0 0 6px rgba(255,255,255,0.08); }
-  .shutter:active { transform:scale(0.9); background:#ddd; }
-  .shutter::after { content:''; position:absolute; inset:8px; border-radius:50%; background:var(--pink); }
+  .win95-bar {
+    background:linear-gradient(90deg,#000080,#1084d0);
+    color:#fff;
+    padding:3px 5px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    font-size:12px;
+    font-weight:bold;
+    user-select:none;
+  }
+  .win95-bar-left { display:flex; align-items:center; gap:4px; }
+  .win95-icon { width:14px; height:14px; background:#ff2060; flex-shrink:0; display:block; }
+  .win95-btns { display:flex; gap:2px; }
+  .win95-btn {
+    width:17px; height:15px;
+    background:#c0c0c0;
+    border-top:1px solid #fff; border-left:1px solid #fff;
+    border-right:1px solid #404040; border-bottom:1px solid #404040;
+    font-size:9px; display:flex; align-items:center; justify-content:center; color:#000;
+    cursor:default;
+  }
 
-  /* PREVIEW */
-  #screen-preview { justify-content:center; gap:0; }
-  #preview-img { width:100%; flex:1; object-fit:cover; transform:scaleX(-1); }
-  .preview-actions { width:100%; padding:20px 24px 36px; display:flex; gap:12px; background:var(--dark); }
-  .btn { flex:1; padding:16px 12px; border:none; border-radius:6px; cursor:pointer; font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:0.15em; transition:transform 0.1s,opacity 0.1s; }
-  .btn:active { transform:scale(0.96); }
-  .btn-retry { background:rgba(255,255,255,0.08); color:rgba(255,255,255,0.6); }
-  .btn-send  { background:var(--pink); color:#fff; box-shadow:0 0 30px rgba(255,32,96,0.4); }
-  .btn-send:disabled { opacity:0.5; pointer-events:none; }
+  .win95-client {
+    border-top:2px solid #404040; border-left:2px solid #404040;
+    border-right:2px solid #fff; border-bottom:2px solid #fff;
+    margin:6px;
+    background:#fff;
+    overflow:hidden;
+  }
 
-  /* SUCCESS */
-  #screen-success { justify-content:center; gap:20px; }
-  .check { width:72px; height:72px; border-radius:50%; background:rgba(255,32,96,0.12); border:2px solid var(--pink); display:flex; align-items:center; justify-content:center; animation:popIn 0.5s cubic-bezier(0.34,1.5,0.64,1) forwards; }
+  .win95-statusbar {
+    border-top:1px solid #808080;
+    padding:3px 6px;
+    font-size:10px;
+    color:#000;
+    background:#c0c0c0;
+    display:flex;
+    gap:8px;
+  }
+  .statusbar-field {
+    border-top:1px solid #808080; border-left:1px solid #808080;
+    border-right:1px solid #fff; border-bottom:1px solid #fff;
+    padding:1px 6px; font-size:10px;
+  }
+
+  /* ── LOADING ── */
+  #screen-loading { justify-content:center; gap:16px; }
+
+  .desktop-icon {
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+    color:#fff; font-size:11px; text-align:center; text-shadow:1px 1px 0 #000;
+    width:70px;
+  }
+  .desktop-icon-img {
+    width:48px; height:48px;
+    background:#c0c0c0;
+    border-top:2px solid #fff; border-left:2px solid #fff;
+    border-right:2px solid #404040; border-bottom:2px solid #404040;
+    display:flex; align-items:center; justify-content:center;
+    font-size:24px;
+  }
+
+  .progress-win {
+    width:100%; max-width:320px;
+  }
+  .progress-body {
+    padding:12px 10px; display:flex; flex-direction:column; gap:8px;
+  }
+  .progress-label { font-size:11px; color:#000; }
+  .progress-track {
+    height:16px; background:#fff;
+    border-top:2px solid #404040; border-left:2px solid #404040;
+    border-right:2px solid #fff; border-bottom:2px solid #fff;
+    overflow:hidden;
+  }
+  .progress-bar {
+    height:100%; background:#000080;
+    animation:progressAnim 1.8s ease-in-out infinite;
+    width:40%;
+  }
+  @keyframes progressAnim {
+    0%   { margin-left:0;   width:35%; }
+    50%  { margin-left:65%; width:35%; }
+    100% { margin-left:0;   width:35%; }
+  }
+
+  /* ── CAMERA ── */
+  #screen-camera { justify-content:center; }
+
+  .camera-win {
+    width:100%; max-width:400px;
+    display:flex; flex-direction:column;
+    /* fill available height minus padding */
+    height:calc(100dvh - 20px);
+    max-height:680px;
+  }
+  .camera-win .win95-client {
+    flex:1; margin:4px 6px 0; position:relative; overflow:hidden; background:#000;
+  }
+  .camera-win video {
+    width:100%; height:100%; object-fit:cover;
+    display:block; transform:scaleX(-1);
+  }
+
+  /* menu bar */
+  .win95-menubar {
+    padding:2px 4px; display:flex; gap:0;
+    border-bottom:1px solid #808080;
+  }
+  .menu-item {
+    padding:2px 8px; font-size:11px; color:#000; cursor:default;
+  }
+  .menu-item:hover { background:#000080; color:#fff; }
+
+  /* toolbar */
+  .win95-toolbar {
+    padding:4px 6px;
+    display:flex; align-items:center; gap:6px;
+    border-bottom:1px solid #808080;
+  }
+  .tb-btn {
+    padding:3px 10px; background:#c0c0c0; cursor:pointer; font-size:11px;
+    border-top:2px solid #fff; border-left:2px solid #fff;
+    border-right:2px solid #404040; border-bottom:2px solid #404040;
+    font-family:'Courier New',monospace;
+  }
+  .tb-btn:active {
+    border-top:2px solid #404040; border-left:2px solid #404040;
+    border-right:2px solid #fff; border-bottom:2px solid #fff;
+  }
+  .tb-btn.primary { background:#000080; color:#fff; font-weight:bold; }
+  .tb-btn.primary:active { background:#00008b; }
+
+  /* shutter area */
+  .shutter-area {
+    padding:6px 6px 4px;
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    background:#c0c0c0;
+  }
+  .shutter-big {
+    width:64px; height:64px;
+    background:#c0c0c0;
+    border-top:3px solid #fff; border-left:3px solid #fff;
+    border-right:3px solid #404040; border-bottom:3px solid #404040;
+    box-shadow:2px 2px 0 #000;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; flex-shrink:0;
+    font-size:28px;
+  }
+  .shutter-big:active {
+    border-top:3px solid #404040; border-left:3px solid #404040;
+    border-right:3px solid #fff; border-bottom:3px solid #fff;
+    box-shadow:none; transform:translate(2px,2px);
+  }
+
+  /* ── PREVIEW ── */
+  #screen-preview { justify-content:center; }
+  .preview-win {
+    width:100%; max-width:400px;
+    height:calc(100dvh - 20px); max-height:680px;
+    display:flex; flex-direction:column;
+  }
+  .preview-win .win95-client {
+    flex:1; margin:4px 6px 0; overflow:hidden; background:#000;
+  }
+  .preview-win .win95-client img {
+    width:100%; height:100%; object-fit:cover; display:block; transform:scaleX(-1);
+  }
+  .preview-actions {
+    padding:6px 6px 4px;
+    display:flex; gap:6px;
+  }
+  .preview-actions .tb-btn { flex:1; text-align:center; font-size:12px; font-weight:bold; }
+  .preview-actions .tb-btn.primary { font-size:13px; }
+
+  /* ── SUCCESS ── */
+  #screen-success { justify-content:center; }
+
+  .success-win {
+    width:100%; max-width:360px;
+  }
+  .success-body {
+    padding:24px 20px; display:flex; flex-direction:column; align-items:center; gap:16px; background:#c0c0c0;
+  }
+  .success-icon {
+    width:64px; height:64px;
+    background:#c0c0c0;
+    border-top:2px solid #fff; border-left:2px solid #fff;
+    border-right:2px solid #404040; border-bottom:2px solid #404040;
+    display:flex; align-items:center; justify-content:center;
+    font-size:32px;
+    animation:popIn .4s cubic-bezier(.34,1.5,.64,1) forwards;
+  }
   @keyframes popIn { from{transform:scale(0)} to{transform:scale(1)} }
-  .check svg { width:34px; height:34px; }
-  .success-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(42px,13vw,72px); letter-spacing:0.08em; text-align:center; }
-  .success-sub { font-size:12px; letter-spacing:0.2em; text-transform:uppercase; color:rgba(255,255,255,0.3); text-align:center; }
-  .btn-another { margin-top:12px; padding:14px 36px; background:transparent; border:1px solid rgba(255,32,96,0.5); color:var(--pink); border-radius:6px; cursor:pointer; font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:0.15em; }
+  .success-title {
+    font-family:'Bebas Neue',sans-serif; font-size:clamp(36px,11vw,56px);
+    letter-spacing:0.08em; text-align:center; color:#000080; line-height:1;
+  }
+  .success-sub { font-size:11px; color:#444; text-align:center; letter-spacing:0.1em; text-transform:uppercase; }
+  .success-actions { display:flex; gap:8px; margin-top:4px; }
+  .success-actions .tb-btn { padding:4px 16px; font-size:12px; font-weight:bold; }
 
-  /* ERROR */
-  #screen-error { justify-content:center; gap:16px; padding:32px; text-align:center; }
-  .err-title { font-family:'Bebas Neue',sans-serif; font-size:36px; letter-spacing:0.1em; color:var(--pink); }
-  .err-sub { font-size:13px; color:rgba(255,255,255,0.4); line-height:1.6; }
+  /* ── ERROR ── */
+  #screen-error { justify-content:center; }
+  .error-win { width:100%; max-width:340px; }
+  .error-body {
+    padding:20px 16px; display:flex; flex-direction:column; align-items:center;
+    gap:14px; background:#c0c0c0; text-align:center;
+  }
+  .error-top { display:flex; align-items:center; gap:12px; width:100%; }
+  .error-icon { font-size:36px; flex-shrink:0; }
+  .error-text { font-size:12px; color:#000; line-height:1.6; text-align:left; }
+  .error-text b { color:#900; }
 
   canvas { display:none; }
 </style>
 </head>
 <body>
 
+<!-- ── LOADING ── -->
 <div id="screen-loading" class="screen active">
-  <div class="brand">SHOOT<br>THE <em>NIGHT</em></div>
-  <div class="spinner"></div>
-  <div class="status-text">Caricamento…</div>
+  <div class="desktop-icon">
+    <div class="desktop-icon-img">📷</div>
+    <span>Camera.exe</span>
+  </div>
+  <div class="win95 progress-win">
+    <div class="win95-bar">
+      <div class="win95-bar-left"><span class="win95-icon"></span> Avvio in corso…</div>
+    </div>
+    <div class="progress-body">
+      <div class="progress-label" id="load-status">Connessione al server…</div>
+      <div class="progress-track"><div class="progress-bar"></div></div>
+    </div>
+  </div>
 </div>
 
+<!-- ── CAMERA ── -->
 <div id="screen-camera" class="screen">
-  <div class="cam-hint">PUNTA &amp; SCATTA</div>
-  <video id="viewfinder" autoplay playsinline muted></video>
-  <div class="cam-ui">
-    <button class="shutter" id="shutter-btn" aria-label="Scatta foto"></button>
+  <div class="win95 camera-win">
+    <div class="win95-bar">
+      <div class="win95-bar-left"><span class="win95-icon"></span> Camera — SHOOT THE NIGHT</div>
+      <div class="win95-btns"><div class="win95-btn">_</div><div class="win95-btn">□</div><div class="win95-btn">✕</div></div>
+    </div>
+    <div class="win95-menubar">
+      <div class="menu-item">File</div>
+      <div class="menu-item">Visualizza</div>
+      <div class="menu-item">?</div>
+    </div>
+    <div class="win95-toolbar">
+      <div class="tb-btn" onclick="switchCamera()">🔄 Cam</div>
+      <div style="flex:1; font-size:10px; color:#444;">Premi 📷 per scattare</div>
+    </div>
+    <div class="win95-client">
+      <video id="viewfinder" autoplay playsinline muted></video>
+    </div>
+    <div class="shutter-area">
+      <div class="shutter-big" id="shutter-btn">📷</div>
+    </div>
+    <div class="win95-statusbar">
+      <div class="statusbar-field" id="cam-status">Pronto</div>
+    </div>
   </div>
 </div>
 
+<!-- ── PREVIEW ── -->
 <div id="screen-preview" class="screen">
-  <img id="preview-img" src="" alt="Anteprima">
-  <div class="preview-actions">
-    <button class="btn btn-retry" id="retry-btn">RIPROVA</button>
-    <button class="btn btn-send" id="send-btn">INVIA</button>
+  <div class="win95 preview-win">
+    <div class="win95-bar">
+      <div class="win95-bar-left"><span class="win95-icon"></span> Anteprima — foto_new.jpg</div>
+      <div class="win95-btns"><div class="win95-btn">✕</div></div>
+    </div>
+    <div class="win95-menubar">
+      <div class="menu-item">File</div>
+      <div class="menu-item">Modifica</div>
+    </div>
+    <div class="win95-client">
+      <img id="preview-img" src="" alt="Anteprima">
+    </div>
+    <div class="preview-actions">
+      <button class="tb-btn" id="retry-btn">↩ Riprova</button>
+      <button class="tb-btn primary" id="send-btn">📤 Invia foto</button>
+    </div>
+    <div class="win95-statusbar">
+      <div class="statusbar-field" id="preview-status">Pronta per l'invio</div>
+    </div>
   </div>
 </div>
 
+<!-- ── SUCCESS ── -->
 <div id="screen-success" class="screen">
-  <div class="check">
-    <svg viewBox="0 0 24 24" fill="none" stroke="#ff2060" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-      <polyline points="20 6 9 17 4 12"/>
-    </svg>
+  <div class="win95 success-win">
+    <div class="win95-bar">
+      <div class="win95-bar-left"><span class="win95-icon"></span> Upload completato!</div>
+      <div class="win95-btns"><div class="win95-btn">✕</div></div>
+    </div>
+    <div class="success-body">
+      <div class="success-icon">✅</div>
+      <div class="success-title">FOTO<br>INVIATA!</div>
+      <div class="success-sub">Guardala sul grande schermo</div>
+      <div class="success-actions">
+        <button class="tb-btn primary" id="another-btn">📷 Scatta un'altra</button>
+      </div>
+    </div>
   </div>
-  <div class="success-title">FOTO<br>INVIATA!</div>
-  <div class="success-sub">Guardala sul grande schermo</div>
-  <button class="btn-another" id="another-btn">SCATTANE UN'ALTRA</button>
 </div>
 
+<!-- ── ERROR ── -->
 <div id="screen-error" class="screen">
-  <div class="err-title">OPS!</div>
-  <div class="err-sub" id="err-msg">Qualcosa è andato storto.<br>Prova ad aggiornare la pagina.</div>
+  <div class="win95 error-win">
+    <div class="win95-bar" style="background:linear-gradient(90deg,#800000,#c04040);">
+      <div class="win95-bar-left"><span class="win95-icon" style="background:#ffff00;"></span> Errore</div>
+      <div class="win95-btns"><div class="win95-btn">✕</div></div>
+    </div>
+    <div class="error-body">
+      <div class="error-top">
+        <div class="error-icon">⛔</div>
+        <div class="error-text" id="err-msg">Errore sconosciuto.</div>
+      </div>
+      <button class="tb-btn" onclick="location.reload()">OK — Riprova</button>
+    </div>
+  </div>
 </div>
 
 <canvas id="snap-canvas"></canvas>
 
 <script>
-// ── CONFIG ───────────────────────────────────────────
-const MAX_PX   = 800;   // lato lungo massimo in pixel
-const QUALITY  = 0.60;  // qualità JPEG (0–1) — ~80KB risultante
+var MAX_PX  = 800;
+var QUALITY = 0.60;
 
-// ── UTILS ────────────────────────────────────────────
 function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
   document.getElementById(id).classList.add('active');
 }
 function showError(msg) {
   document.getElementById('err-msg').innerHTML = msg;
   showScreen('screen-error');
 }
+function setStatus(id, msg) {
+  var el = document.getElementById(id);
+  if (el) el.textContent = msg;
+}
 
-// ── GET FIREBASE URL FROM QR PARAM ───────────────────
-const params = new URLSearchParams(location.search);
-const dbUrl  = params.get('db');
+// ── FIREBASE URL ──────────────────────────────────────
+var params = new URLSearchParams(location.search);
+var dbUrl  = params.get('db');
 
 if (!dbUrl) {
   showError('QR Code non valido.<br>Scansiona il QR sul grande schermo.');
@@ -129,76 +390,92 @@ if (!dbUrl) {
 }
 
 // ── CAMERA ───────────────────────────────────────────
-let stream, lastDataUrl;
+var stream;
+var lastDataUrl;
+var facingMode = 'user';
 
-async function startCamera() {
-  try {
-    stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode:'user', width:{ideal:1280}, height:{ideal:1280} },
-      audio: false
-    });
+function startCamera() {
+  setStatus('load-status', 'Avvio fotocamera…');
+  navigator.mediaDevices.getUserMedia({
+    video: { facingMode: facingMode, width:{ideal:1280}, height:{ideal:1280} },
+    audio: false
+  })
+  .then(function(s) {
+    stream = s;
     document.getElementById('viewfinder').srcObject = stream;
     showScreen('screen-camera');
-  } catch(e) {
+    setStatus('cam-status', 'Fotocamera attiva');
+  })
+  .catch(function() {
     showError('Fotocamera non accessibile.<br>Controlla i permessi del browser.');
-  }
+  });
+}
+
+function switchCamera() {
+  facingMode = facingMode === 'user' ? 'environment' : 'user';
+  if (stream) stream.getTracks().forEach(function(t) { t.stop(); });
+  startCamera();
 }
 
 // ── SHUTTER ──────────────────────────────────────────
-document.getElementById('shutter-btn').addEventListener('click', () => {
-  const video  = document.getElementById('viewfinder');
-  const canvas = document.getElementById('snap-canvas');
-  const ctx    = canvas.getContext('2d');
+document.getElementById('shutter-btn').addEventListener('click', function() {
+  var video  = document.getElementById('viewfinder');
+  var canvas = document.getElementById('snap-canvas');
+  var ctx    = canvas.getContext('2d');
 
-  // Calcola dimensioni ridimensionate
-  let w = video.videoWidth  || 640;
-  let h = video.videoHeight || 640;
+  var w = video.videoWidth  || 640;
+  var h = video.videoHeight || 640;
   if (w > MAX_PX || h > MAX_PX) {
-    const scale = MAX_PX / Math.max(w, h);
-    w = Math.round(w * scale);
-    h = Math.round(h * scale);
+    var sc = MAX_PX / Math.max(w, h);
+    w = Math.round(w * sc);
+    h = Math.round(h * sc);
   }
+  canvas.width = w; canvas.height = h;
 
-  canvas.width  = w;
-  canvas.height = h;
-
-  // Mirror selfie
-  ctx.translate(w, 0);
-  ctx.scale(-1, 1);
+  if (facingMode === 'user') {
+    ctx.translate(w, 0); ctx.scale(-1, 1);
+  }
   ctx.drawImage(video, 0, 0, w, h);
 
   lastDataUrl = canvas.toDataURL('image/jpeg', QUALITY);
   document.getElementById('preview-img').src = lastDataUrl;
+  setStatus('preview-status', 'Pronta per l\'invio · ' + Math.round(lastDataUrl.length * 0.75 / 1024) + ' KB');
   showScreen('screen-preview');
 });
 
-document.getElementById('retry-btn').addEventListener('click', () => showScreen('screen-camera'));
+document.getElementById('retry-btn').addEventListener('click', function() {
+  showScreen('screen-camera');
+});
 
 // ── SEND ─────────────────────────────────────────────
-document.getElementById('send-btn').addEventListener('click', async () => {
-  const btn = document.getElementById('send-btn');
+document.getElementById('send-btn').addEventListener('click', function() {
+  var btn = document.getElementById('send-btn');
   btn.disabled = true;
-  btn.textContent = 'INVIO…';
+  btn.textContent = '⏳ Invio in corso…';
+  setStatus('preview-status', 'Caricamento…');
 
-  try {
-    const res = await fetch(`${dbUrl}/photos.json`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ dataUrl: lastDataUrl, ts: Date.now() })
-    });
+  fetch(dbUrl + '/photos.json', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ dataUrl: lastDataUrl, ts: Date.now() })
+  })
+  .then(function(res) {
     if (!res.ok) throw new Error('HTTP ' + res.status);
     showScreen('screen-success');
-  } catch(e) {
+  })
+  .catch(function() {
     btn.disabled = false;
-    btn.textContent = 'INVIA';
-    alert('Errore invio. Controlla la connessione e riprova.');
-  }
+    btn.textContent = '📤 Invia foto';
+    setStatus('preview-status', 'Errore — riprova');
+    alert('Errore invio. Controlla la connessione.');
+  });
 });
 
 // ── ANOTHER ──────────────────────────────────────────
-document.getElementById('another-btn').addEventListener('click', () => {
-  document.getElementById('send-btn').disabled = false;
-  document.getElementById('send-btn').textContent = 'INVIA';
+document.getElementById('another-btn').addEventListener('click', function() {
+  var btn = document.getElementById('send-btn');
+  btn.disabled = false;
+  btn.textContent = '📤 Invia foto';
   showScreen('screen-camera');
 });
 </script>
