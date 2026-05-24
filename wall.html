@@ -6,78 +6,210 @@
 <title>WALL</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;700&display=swap" rel="stylesheet">
 <style>
-  :root { --pink:#ff2060; --dark:#05050a; }
+  :root { --pink:#ff2060; --dark:#05050a; --scale:1; }
   * { margin:0; padding:0; box-sizing:border-box; }
   body { background:var(--dark); overflow:hidden; width:100vw; height:100vh; font-family:'Syne',sans-serif; }
 
   body::before {
-    content:''; position:fixed; inset:0; pointer-events:none; z-index:9997;
-    background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.06) 2px,rgba(0,0,0,0.06) 4px);
+    content:''; position:fixed; inset:0; pointer-events:none; z-index:9990;
+    background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.05) 2px,rgba(0,0,0,0.05) 4px);
   }
 
+  /* ── WAIT SCREEN ── */
   #wait-screen {
     position:fixed; inset:0; display:flex; flex-direction:column;
-    align-items:center; justify-content:center; gap:32px; z-index:100;
+    align-items:center; justify-content:center; gap:32px; z-index:500;
     background:var(--dark); transition:opacity 1.2s ease;
   }
   #wait-screen.hidden { opacity:0; pointer-events:none; }
-
-  .logo {
-    font-family:'Bebas Neue',sans-serif;
-    font-size:clamp(56px,11vw,130px);
-    letter-spacing:0.08em; line-height:0.88; color:#fff; text-align:center;
-  }
+  .logo { font-family:'Bebas Neue',sans-serif; font-size:clamp(56px,11vw,130px); letter-spacing:0.08em; line-height:0.88; color:#fff; text-align:center; }
   .logo em { color:var(--pink); font-style:normal; text-shadow:0 0 40px rgba(255,32,96,0.5); }
-
-  .qr-wrap {
-    background:#fff; padding:16px; border-radius:10px;
-    box-shadow:0 0 60px rgba(255,32,96,0.2), 0 0 0 1px rgba(255,32,96,0.3);
-    display:inline-block; line-height:0;
-  }
+  .qr-wrap { background:#fff; padding:16px; border-radius:10px; box-shadow:0 0 60px rgba(255,32,96,0.2); display:inline-block; line-height:0; }
   #qr-img { width:200px; height:200px; display:block; }
-
-  .qr-label {
-    font-size:11px; letter-spacing:0.22em; text-transform:uppercase;
-    color:rgba(255,255,255,0.35); text-align:center; margin-top:10px;
-  }
-
+  .qr-label { font-size:11px; letter-spacing:0.22em; text-transform:uppercase; color:rgba(255,255,255,0.35); text-align:center; margin-top:10px; }
   .pulse { display:flex; gap:8px; align-items:center; font-size:11px; letter-spacing:0.2em; text-transform:uppercase; color:rgba(255,255,255,0.25); }
   .pulse-dot { width:6px; height:6px; border-radius:50%; background:var(--pink); animation:pulseDot 1.4s ease-in-out infinite; }
   @keyframes pulseDot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.3;transform:scale(0.6)} }
 
+  /* ── HERO OVERLAY ── */
+  #hero-overlay {
+    position:fixed; inset:0; z-index:400;
+    display:flex; align-items:center; justify-content:center;
+    pointer-events:none;
+  }
+
+  .hero-window {
+    pointer-events:none;
+    animation: heroIn 0.4s cubic-bezier(0.22,1,0.36,1) forwards,
+               heroOut 0.6s ease 2.2s forwards;
+    transform-origin: center center;
+  }
+
+  @keyframes heroIn {
+    from { opacity:0; transform:scale(0.6); }
+    to   { opacity:1; transform:scale(1); }
+  }
+  @keyframes heroOut {
+    from { opacity:1; transform:scale(1); }
+    to   { opacity:0; transform:scale(0.4) translateY(60px); }
+  }
+
+  /* ── WIN95 WINDOW ── */
+  .win95 {
+    background:#c0c0c0;
+    border-top:2px solid #fff;
+    border-left:2px solid #fff;
+    border-right:2px solid #404040;
+    border-bottom:2px solid #404040;
+    box-shadow:2px 2px 0 #000;
+    font-family:'Courier New', monospace;
+    font-size:11px;
+  }
+
+  .win95-titlebar {
+    background:linear-gradient(90deg,#000080,#1084d0);
+    color:#fff;
+    padding:3px 4px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    font-size:11px;
+    font-family:'Courier New', monospace;
+    font-weight:bold;
+    letter-spacing:0;
+    user-select:none;
+  }
+
+  .win95-title-text { display:flex; align-items:center; gap:4px; }
+  .win95-icon { width:14px; height:14px; background:var(--pink); display:inline-block; }
+
+  .win95-btns { display:flex; gap:2px; }
+  .win95-btn {
+    width:16px; height:14px;
+    background:#c0c0c0;
+    border-top:1px solid #fff;
+    border-left:1px solid #fff;
+    border-right:1px solid #404040;
+    border-bottom:1px solid #404040;
+    display:flex; align-items:center; justify-content:center;
+    font-size:9px; color:#000; font-weight:bold; cursor:default;
+    line-height:1;
+  }
+
+  .win95-body {
+    padding:2px;
+    background:#c0c0c0;
+    border-top:2px solid #404040;
+    border-left:2px solid #404040;
+    border-right:2px solid #fff;
+    border-bottom:2px solid #fff;
+    line-height:0;
+  }
+
+  .win95-body img {
+    display:block;
+  }
+
+  /* ── FLOATING CARDS ── */
   #wall { position:fixed; inset:0; }
 
-  @keyframes floatIn {
-    from { opacity:0; transform:scale(0.55) rotate(var(--r)) translateY(50px); filter:blur(4px); }
-    to   { opacity:1; transform:scale(1)   rotate(var(--r)) translateY(0);     filter:blur(0); }
-  }
-  @keyframes fadeOut {
-    to { opacity:0; transform:scale(0.88) rotate(var(--r)); filter:blur(3px); }
-  }
-
   .photo-card {
-    position:absolute; border-radius:3px; overflow:hidden;
-    box-shadow:0 0 0 2px rgba(255,32,96,0.25), 0 16px 60px rgba(0,0,0,0.95);
-    animation:floatIn 0.65s cubic-bezier(0.34,1.35,0.64,1) forwards;
-    will-change:transform,opacity; --r:0deg;
+    position:absolute;
+    transform-origin:center center;
+    animation:floatSettle 0.5s cubic-bezier(0.34,1.2,0.64,1) forwards;
+    will-change:transform,opacity;
+    --r:0deg;
+    --tx:0px;
+    --ty:0px;
   }
-  .photo-card:hover {
-    box-shadow:0 0 0 2px var(--pink), 0 0 50px rgba(255,32,96,0.35), 0 16px 60px rgba(0,0,0,0.95) !important;
-    z-index:9990 !important;
-  }
-  .photo-card.dying { animation:fadeOut 1.8s ease forwards; }
-  .photo-card img { display:block; width:100%; height:100%; object-fit:cover; }
 
+  @keyframes floatSettle {
+    from { opacity:0; transform:translate(var(--tx),var(--ty)) rotate(var(--r)) scale(0.3); filter:blur(6px); }
+    to   { opacity:1; transform:translate(0,0) rotate(var(--r)) scale(var(--scale)); filter:blur(0); }
+  }
+
+  @keyframes fadeOut {
+    to { opacity:0; transform:rotate(var(--r)) scale(calc(var(--scale)*0.85)); filter:blur(4px); }
+  }
+
+  .photo-card.dying { animation:fadeOut 1.8s ease forwards; }
+
+  /* ── COUNTER ── */
   #counter {
-    position:fixed; bottom:20px; right:24px; z-index:9999;
+    position:fixed; bottom:72px; right:24px; z-index:9999;
     font-family:'Bebas Neue',sans-serif; font-size:12px; letter-spacing:0.25em;
     color:rgba(255,255,255,0.15); text-transform:uppercase;
   }
   #counter b { color:var(--pink); font-size:20px; font-weight:normal; }
 
-  #flash { position:fixed; inset:0; background:var(--pink); opacity:0; pointer-events:none; z-index:9996; transition:opacity 0.05s; }
+  /* ── FLASH ── */
+  #flash { position:fixed; inset:0; background:var(--pink); opacity:0; pointer-events:none; z-index:9989; transition:opacity 0.05s; }
   #flash.on { opacity:0.07; }
 
+  /* ── SLIDER PANEL (Win95 style) ── */
+  #slider-panel {
+    position:fixed; bottom:16px; left:50%; transform:translateX(-50%);
+    z-index:9999;
+    font-family:'Courier New', monospace; font-size:11px;
+  }
+
+  .slider-win95 {
+    background:#c0c0c0;
+    border-top:2px solid #fff;
+    border-left:2px solid #fff;
+    border-right:2px solid #404040;
+    border-bottom:2px solid #404040;
+    box-shadow:2px 2px 0 #000;
+    min-width:280px;
+  }
+
+  .slider-titlebar {
+    background:linear-gradient(90deg,#000080,#1084d0);
+    color:#fff; padding:3px 6px;
+    font-size:10px; font-weight:bold; letter-spacing:0;
+    display:flex; align-items:center; gap:4px;
+  }
+
+  .slider-body {
+    padding:8px 12px;
+    display:flex; align-items:center; gap:10px;
+  }
+
+  .slider-label { font-size:10px; color:#000; white-space:nowrap; }
+
+  #size-slider {
+    -webkit-appearance:none; appearance:none;
+    width:160px; height:4px;
+    background:#808080;
+    border-top:1px solid #404040;
+    border-left:1px solid #404040;
+    border-right:1px solid #fff;
+    border-bottom:1px solid #fff;
+    outline:none; cursor:pointer;
+  }
+  #size-slider::-webkit-slider-thumb {
+    -webkit-appearance:none;
+    width:12px; height:20px;
+    background:#c0c0c0;
+    border-top:2px solid #fff;
+    border-left:2px solid #fff;
+    border-right:2px solid #404040;
+    border-bottom:2px solid #404040;
+    cursor:pointer;
+  }
+  #size-slider::-moz-range-thumb {
+    width:12px; height:20px;
+    background:#c0c0c0;
+    border-top:2px solid #fff;
+    border-left:2px solid #fff;
+    border-right:2px solid #404040;
+    border-bottom:2px solid #404040;
+    cursor:pointer; border-radius:0;
+  }
+
+  #size-val { font-size:10px; color:#000; min-width:28px; }
+
+  /* ── CONFIG OVERLAY ── */
   #config-overlay {
     position:fixed; inset:0; background:rgba(0,0,0,0.97);
     display:flex; flex-direction:column; align-items:center; justify-content:center;
@@ -86,49 +218,106 @@
   #config-overlay.hidden { display:none; }
   .cfg-title { font-family:'Bebas Neue',sans-serif; font-size:32px; letter-spacing:0.1em; color:var(--pink); }
   .cfg-sub { font-size:12px; letter-spacing:0.12em; text-transform:uppercase; color:rgba(255,255,255,0.35); text-align:center; line-height:2; }
-  .cfg-input {
-    width:100%; max-width:500px; padding:14px 16px;
-    background:rgba(255,255,255,0.06); border:1px solid rgba(255,32,96,0.5);
-    border-radius:6px; color:#fff; font-size:14px; outline:none;
-  }
+  .cfg-input { width:100%; max-width:500px; padding:14px 16px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,32,96,0.5); border-radius:6px; color:#fff; font-size:14px; outline:none; }
   .cfg-input:focus { border-color:var(--pink); }
-  .cfg-btn {
-    padding:14px 40px; background:var(--pink); border:none; border-radius:6px;
-    color:#fff; font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:0.15em; cursor:pointer;
-  }
+  .cfg-btn { padding:14px 40px; background:var(--pink); border:none; border-radius:6px; color:#fff; font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:0.15em; cursor:pointer; }
   .cfg-note { font-size:11px; color:rgba(255,255,255,0.2); text-align:center; }
 </style>
 </head>
 <body>
 
+<!-- CONFIG -->
 <div id="config-overlay">
   <div class="cfg-title">CONFIGURA FIREBASE</div>
   <div class="cfg-sub">Incolla il tuo Firebase Realtime Database URL<br>(Firebase Console → Realtime Database → copia l'URL in cima)</div>
   <input class="cfg-input" id="db-url-input" type="url" placeholder="https://nome-progetto-default-rtdb.firebaseio.com">
   <button class="cfg-btn" onclick="saveConfig()">AVVIA WALL</button>
-  <div class="cfg-note">Viene salvato, non dovrai reinserirlo · <span style="color:rgba(255,32,96,0.5);cursor:pointer" onclick="localStorage.removeItem('dj_db_url')">reset</span></div>
+  <div class="cfg-note">Viene salvato · <span style="color:rgba(255,32,96,0.5);cursor:pointer" onclick="localStorage.removeItem('dj_db_url')">reset</span></div>
 </div>
 
+<!-- WAIT -->
 <div id="wait-screen">
   <div class="logo">SHOOT<br>THE<br><em>NIGHT</em></div>
   <div>
-    <div class="qr-wrap">
-      <img id="qr-img" src="" alt="QR Code">
-    </div>
+    <div class="qr-wrap"><img id="qr-img" src="" alt="QR Code"></div>
     <div class="qr-label">Scansiona &amp; invia la tua foto</div>
   </div>
   <div class="pulse"><div class="pulse-dot"></div><span id="status-msg">In attesa di foto…</span></div>
 </div>
 
+<!-- HERO (foto grande al centro) -->
+<div id="hero-overlay"></div>
+
+<!-- WALL -->
 <div id="wall"></div>
 <div id="flash"></div>
 <div id="counter">Foto &nbsp;<b id="count">0</b></div>
 
+<!-- CONTROL PANEL -->
+<div id="slider-panel">
+  <div class="slider-win95">
+    <div class="slider-titlebar">⚙ Display Properties</div>
+    <div class="slider-body" style="flex-wrap:wrap;gap:12px 20px;">
+      <!-- Dimensione foto -->
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span class="slider-label">Foto:</span>
+        <input type="range" id="size-slider" min="30" max="250" value="100" step="5" style="width:120px;">
+        <input type="number" id="size-input" min="30" max="250" value="100" style="width:48px;padding:1px 3px;font-family:'Courier New',monospace;font-size:10px;border:inset 2px #808080;background:#fff;">
+        <span class="slider-label">%</span>
+      </div>
+      <!-- Larghezza canvas -->
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span class="slider-label">W:</span>
+        <input type="number" id="canvas-w" value="" placeholder="auto" style="width:60px;padding:1px 3px;font-family:'Courier New',monospace;font-size:10px;border:inset 2px #808080;background:#fff;">
+        <span class="slider-label">px</span>
+      </div>
+      <!-- Altezza canvas -->
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span class="slider-label">H:</span>
+        <input type="number" id="canvas-h" value="" placeholder="auto" style="width:60px;padding:1px 3px;font-family:'Courier New',monospace;font-size:10px;border:inset 2px #808080;background:#fff;">
+        <span class="slider-label">px</span>
+      </div>
+      <button onclick="applyCanvas()" style="padding:2px 10px;font-family:'Courier New',monospace;font-size:10px;background:#c0c0c0;border-top:2px solid #fff;border-left:2px solid #fff;border-right:2px solid #404040;border-bottom:2px solid #404040;cursor:pointer;">Apply</button>
+    </div>
+  </div>
+</div>
+
 <script>
 var PHOTO_LIFE    = 22000;
 var MAX_ON_SCREEN = 16;
+var photoScale    = 1.0; // moltiplicatore globale
 
-// Auto-start se già configurato
+// ── CONTROLS ────────────────────────────────────
+var slider    = document.getElementById('size-slider');
+var sizeInput = document.getElementById('size-input');
+
+function applyScale(val) {
+  val = Math.min(250, Math.max(30, parseInt(val) || 100));
+  photoScale = val / 100;
+  slider.value = val;
+  sizeInput.value = val;
+  document.querySelectorAll('.photo-card:not(.dying)').forEach(function(card) {
+    var rot = card.dataset.rot || '0';
+    card.style.transform = 'rotate(' + rot + 'deg) scale(' + photoScale + ')';
+  });
+}
+
+slider.addEventListener('input', function() { applyScale(this.value); });
+sizeInput.addEventListener('change', function() { applyScale(this.value); });
+sizeInput.addEventListener('keydown', function(e) { if(e.key==='Enter') applyScale(this.value); });
+
+function applyCanvas() {
+  var w = parseInt(document.getElementById('canvas-w').value);
+  var h = parseInt(document.getElementById('canvas-h').value);
+  var wall = document.getElementById('wall');
+  var body = document.body;
+  if (w > 0) { body.style.width = w+'px'; wall.style.width = w+'px'; }
+  else        { body.style.width = '100vw'; wall.style.width = '100%'; }
+  if (h > 0) { body.style.height = h+'px'; wall.style.height = h+'px'; }
+  else        { body.style.height = '100vh'; wall.style.height = '100%'; }
+}
+
+// ── CONFIG ──────────────────────────────────────
 var saved = localStorage.getItem('dj_db_url');
 if (saved) {
   document.getElementById('config-overlay').classList.add('hidden');
@@ -137,29 +326,24 @@ if (saved) {
 
 function saveConfig() {
   var val = document.getElementById('db-url-input').value.trim().replace(/\/$/, '');
-  if (!val.startsWith('https://')) { alert('URL non valido — deve iniziare con https://'); return; }
+  if (!val.startsWith('https://')) { alert('URL non valido'); return; }
   localStorage.setItem('dj_db_url', val);
   document.getElementById('config-overlay').classList.add('hidden');
   startWall(val);
 }
 
 function startWall(dbUrl) {
-  // Costruisce URL della camera page
   var base = location.href.replace(/wall\.html.*$/, '');
   var cameraUrl = base + 'camera.html?db=' + encodeURIComponent(dbUrl);
-
-  // QR come semplice <img> — nessuna libreria, funziona sempre
   var qrImg = document.getElementById('qr-img');
   qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=10&data=' + encodeURIComponent(cameraUrl);
   qrImg.onerror = function() {
-    // Secondo fallback: quickchart.io
     qrImg.src = 'https://quickchart.io/qr?size=200&text=' + encodeURIComponent(cameraUrl);
   };
-
   listenPhotos(dbUrl);
 }
 
-// ── FIREBASE POLLING ──────────────────────────────
+// ── FIREBASE ────────────────────────────────────
 var seenKeys = {};
 var total = 0;
 var firstPhoto = true;
@@ -174,14 +358,8 @@ function listenPhotos(dbUrl) {
   setInterval(function() {
     fetch(dbUrl + '/photos.json')
       .then(function(r) {
-        if (r.status === 401 || r.status === 403) {
-          setStatus('⚠ Accesso negato — vai su Firebase → Regole e imposta ".read": true', '#ff6060');
-          return null;
-        }
-        if (!r.ok) {
-          setStatus('Errore HTTP ' + r.status, '#ff6060');
-          return null;
-        }
+        if (r.status === 401 || r.status === 403) { setStatus('⚠ Accesso negato — controlla le regole Firebase', '#ff6060'); return null; }
+        if (!r.ok) { setStatus('Errore HTTP ' + r.status, '#ff6060'); return null; }
         return r.json();
       })
       .then(function(data) {
@@ -194,12 +372,44 @@ function listenPhotos(dbUrl) {
           }
         });
       })
-      .catch(function(err) {
-        setStatus('Errore connessione: ' + err.message, '#ff6060');
-      });
+      .catch(function(err) { setStatus('Errore: ' + err.message, '#ff6060'); });
   }, 1500);
 }
-// ── PHOTO WALL ────────────────────────────────────
+
+// ── HERO ANIMATION ──────────────────────────────
+var heroOverlay = document.getElementById('hero-overlay');
+
+function showHero(dataUrl, callback) {
+  // Dimensione hero: 70% dello schermo, aspect portrait
+  var heroW = Math.round(Math.min(window.innerWidth * 0.55, 500));
+  var heroH = Math.round(heroW * 1.35);
+
+  // Crea finestra Win95
+  var win = document.createElement('div');
+  win.className = 'hero-window';
+
+  win.innerHTML =
+    '<div class="win95" style="width:' + (heroW + 12) + 'px">' +
+      '<div class="win95-titlebar">' +
+        '<div class="win95-title-text"><span class="win95-icon"></span> Photo_' + String(total+1).padStart(4,'0') + '.jpg</div>' +
+        '<div class="win95-btns"><div class="win95-btn">_</div><div class="win95-btn">□</div><div class="win95-btn">✕</div></div>' +
+      '</div>' +
+      '<div class="win95-body">' +
+        '<img src="' + dataUrl + '" style="width:' + heroW + 'px;height:' + heroH + 'px;object-fit:cover;display:block;">' +
+      '</div>' +
+    '</div>';
+
+  heroOverlay.innerHTML = '';
+  heroOverlay.appendChild(win);
+
+  // Dopo 2.8s (heroOut dura fino a ~2.8s) lancia callback
+  setTimeout(function() {
+    heroOverlay.innerHTML = '';
+    if (callback) callback();
+  }, 2900);
+}
+
+// ── ADD PHOTO ───────────────────────────────────
 var wall    = document.getElementById('wall');
 var waitEl  = document.getElementById('wait-screen');
 var countEl = document.getElementById('count');
@@ -212,24 +422,63 @@ function addPhoto(dataUrl) {
   flashEl.classList.add('on');
   setTimeout(function() { flashEl.classList.remove('on'); }, 120);
 
+  // 1) Mostra hero grande al centro
+  showHero(dataUrl, function() {
+    // 2) Dopo hero, lancia nel wall
+    spawnCard(dataUrl);
+  });
+}
+
+function spawnCard(dataUrl) {
   var alive = wall.querySelectorAll('.photo-card:not(.dying)');
   if (alive.length >= MAX_ON_SCREEN) killCard(alive[0]);
 
   var W = window.innerWidth, H = window.innerHeight;
-  var w = Math.round(Math.random() * 110 + 155);
-  var h = Math.round(w * (Math.random() * 0.25 + 1.15));
-  var x = Math.random() * (W - w - 16) + 8;
-  var y = Math.random() * (H - h - 16) + 8;
-  var rot = (Math.random() - 0.5) * 10;
+  // Dimensione base della card
+  var baseW = Math.round(Math.random() * 100 + 140);
+  var baseH = Math.round(baseW * (Math.random() * 0.2 + 1.2));
+
+  var x = Math.random() * (W - baseW - 20) + 10;
+  var y = Math.random() * (H - baseH - 80) + 10;
+  var rot = (Math.random() - 0.5) * 14;
+
+  // Offset di entrata dal centro (simula "vola via" dal centro)
+  var cx = W/2 - x - baseW/2;
+  var cy = H/2 - y - baseH/2;
 
   var card = document.createElement('div');
   card.className = 'photo-card';
-  card.style.cssText = 'left:'+x+'px;top:'+y+'px;width:'+w+'px;height:'+h+'px;z-index:'+(100+total)+';--r:'+rot+'deg;transform:rotate('+rot+'deg);';
+  card.dataset.rot = rot;
+  card.style.cssText = [
+    'left:'+x+'px',
+    'top:'+y+'px',
+    'width:'+baseW+'px',
+    'height:'+(baseH+24)+'px',
+    'z-index:'+(100+total),
+    '--r:'+rot+'deg',
+    '--tx:'+cx+'px',
+    '--ty:'+cy+'px',
+  ].join(';');
 
-  var img = document.createElement('img');
-  img.src = dataUrl;
-  card.appendChild(img);
+  // Struttura Win95
+  card.innerHTML =
+    '<div class="win95" style="width:100%;height:100%;display:flex;flex-direction:column;">' +
+      '<div class="win95-titlebar" style="flex-shrink:0;">' +
+        '<div class="win95-title-text"><span class="win95-icon"></span> foto_' + String(total+1).padStart(3,'0') + '.jpg</div>' +
+        '<div class="win95-btns"><div class="win95-btn">✕</div></div>' +
+      '</div>' +
+      '<div class="win95-body" style="flex:1;padding:2px;">' +
+        '<img src="'+dataUrl+'" style="width:100%;height:100%;object-fit:cover;display:block;">' +
+      '</div>' +
+    '</div>';
+
   wall.appendChild(card);
+
+  // Dopo settle, applica scala slider
+  setTimeout(function() {
+    card.style.transform = 'rotate('+rot+'deg) scale('+photoScale+')';
+    card.style.transition = 'transform 0.3s ease';
+  }, 550);
 
   total++;
   countEl.textContent = total;
