@@ -4,188 +4,204 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WALL</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
 <style>
-  * { margin:0; padding:0; box-sizing:border-box; }
+* { margin:0; padding:0; box-sizing:border-box; user-select:none; }
+html,body { width:100%; height:100%; background:#111; overflow:hidden; font-family:'Courier New',monospace; }
 
-  html, body {
-    width:100%; height:100%;
-    background:#111;
-    overflow:hidden;
-    font-family:'Courier New', monospace;
-  }
+/* ── CANVAS ── */
+#canvas {
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  background:#00B140;
+  border-top:3px solid #fff; border-left:3px solid #fff;
+  border-right:3px solid #404040; border-bottom:3px solid #404040;
+  box-shadow:3px 3px 0 #000, 0 0 0 1px #000;
+}
 
-  /* ── CANVAS AREA ── */
-  #canvas {
-    position:absolute;
-    top:50%; left:50%;
-    transform:translate(-50%, -50%);
-    background:#00B140;
-    overflow:hidden;
-    /* border Win95 style */
-    border-top:3px solid #fff;
-    border-left:3px solid #fff;
-    border-right:3px solid #404040;
-    border-bottom:3px solid #404040;
-    box-shadow:3px 3px 0 #000, 0 0 0 1px #000;
-  }
+/* ── WAIT SCREEN (only shown before first photo) ── */
+#wait-screen {
+  position:fixed; inset:0; z-index:8000;
+  display:flex; align-items:center; justify-content:center;
+  background:#111; transition:opacity 0.8s ease;
+}
+#wait-screen.hidden { opacity:0; pointer-events:none; }
 
-  /* ── WAIT SCREEN ── */
-  #wait-screen {
-    position:fixed; inset:0; z-index:9000;
-    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px;
-    background:#111; transition:opacity 0.8s ease;
-  }
-  #wait-screen.hidden { opacity:0; pointer-events:none; }
-  .qr-wrap {
-    background:#fff; padding:16px;
-    border-top:2px solid #fff; border-left:2px solid #fff;
-    border-right:2px solid #404040; border-bottom:2px solid #404040;
-    box-shadow:2px 2px 0 #000; display:inline-block; line-height:0;
-  }
-  #qr-img { display:block; width:min(60vmin, 420px); height:min(60vmin, 420px); }
+/* ── QR OVERLAY (persistent, always on top of canvas) ── */
+#qr-overlay {
+  position:absolute; z-index:5000;
+  bottom:16px; left:16px;
+  display:flex; flex-direction:column; gap:0;
+  transition:opacity 0.3s;
+}
+#qr-overlay.hidden { opacity:0; pointer-events:none; }
+#qr-overlay .win95-bar { cursor:move; }
+.qr-box {
+  background:#fff; padding:8px; line-height:0;
+  border-top:2px solid #404040; border-left:2px solid #404040;
+  border-right:2px solid #fff; border-bottom:2px solid #fff;
+}
+#qr-img-live { display:block; }
+#qr-img-wait { display:block; width:min(60vmin,420px); height:min(60vmin,420px); }
 
-  /* ── WIN95 ── */
-  .win95 {
-    background:#c0c0c0;
-    border-top:2px solid #fff; border-left:2px solid #fff;
-    border-right:2px solid #404040; border-bottom:2px solid #404040;
-    box-shadow:2px 2px 0 #000;
-  }
-  .win95-bar {
-    background:linear-gradient(90deg,#000080,#1084d0);
-    color:#fff; padding:2px 4px;
-    display:flex; align-items:center; justify-content:space-between;
-    font-size:11px; font-weight:bold;
-    user-select:none; white-space:nowrap; overflow:hidden;
-  }
-  .win95-bar-left { display:flex; align-items:center; gap:3px; overflow:hidden; }
-  .win95-dot { width:12px; height:12px; flex-shrink:0; background:#ff2060; display:inline-block; }
-  .win95-bar-left span:last-child { overflow:hidden; text-overflow:ellipsis; }
-  .win95-btns { display:flex; gap:2px; flex-shrink:0; }
-  .win95-btn {
-    width:15px; height:13px; background:#c0c0c0;
-    border-top:1px solid #fff; border-left:1px solid #fff;
-    border-right:1px solid #404040; border-bottom:1px solid #404040;
-    font-size:8px; display:flex; align-items:center; justify-content:center; color:#000;
-  }
-  .win95-body {
-    border-top:2px solid #404040; border-left:2px solid #404040;
-    border-right:2px solid #fff; border-bottom:2px solid #fff;
-    padding:2px; background:#c0c0c0; line-height:0; overflow:hidden;
-  }
-  .win95-body img { display:block; width:100%; height:100%; object-fit:cover; }
+/* ── WIN95 SHARED ── */
+.w95 {
+  background:#c0c0c0;
+  border-top:2px solid #fff; border-left:2px solid #fff;
+  border-right:2px solid #404040; border-bottom:2px solid #404040;
+  box-shadow:2px 2px 0 #000;
+}
+.w95-bar {
+  background:linear-gradient(90deg,#000080,#1084d0);
+  color:#fff; padding:2px 4px;
+  display:flex; align-items:center; justify-content:space-between;
+  font-size:11px; font-weight:bold; white-space:nowrap; overflow:hidden; flex-shrink:0;
+}
+.w95-bar-left { display:flex; align-items:center; gap:3px; overflow:hidden; flex:1; min-width:0; }
+.w95-dot { width:12px; height:12px; flex-shrink:0; background:#ff2060; display:inline-block; }
+.w95-title { overflow:hidden; text-overflow:ellipsis; }
+.w95-btns { display:flex; gap:2px; flex-shrink:0; margin-left:4px; }
+.w95-btn {
+  width:15px; height:13px; background:#c0c0c0;
+  border-top:1px solid #fff; border-left:1px solid #fff;
+  border-right:1px solid #404040; border-bottom:1px solid #404040;
+  font-size:9px; display:flex; align-items:center; justify-content:center; color:#000;
+  cursor:pointer; flex-shrink:0;
+}
+.w95-btn:active {
+  border-top:1px solid #404040; border-left:1px solid #404040;
+  border-right:1px solid #fff; border-bottom:1px solid #fff;
+}
+.w95-body {
+  flex:1; overflow:hidden;
+  border-top:2px solid #404040; border-left:2px solid #404040;
+  border-right:2px solid #fff; border-bottom:2px solid #fff;
+  padding:2px; background:#c0c0c0; line-height:0;
+}
+.w95-body img { display:block; width:100%; height:100%; object-fit:cover; pointer-events:none; }
 
-  /* ── FLOATING CARDS ── */
-  .photo-card {
-    position:absolute;
-    transform-origin:center center;
-    /* transition only for scale changes from slider, NOT for position (handled by JS) */
-    transition:transform 0.35s ease;
-    will-change:transform, left, top;
-  }
-  .photo-card.dying {
-    transition:opacity 1.5s ease, transform 1.5s ease !important;
-    opacity:0 !important;
-    transform:scale(0.6) !important;
-  }
+/* ── PHOTO CARD ── */
+.photo-card {
+  position:absolute; min-width:80px; min-height:70px;
+  display:flex; flex-direction:column;
+}
+.photo-card .w95 { width:100%; height:100%; display:flex; flex-direction:column; }
 
-  /* ── FLASH ── */
-  #flash { position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none; z-index:850; transition:opacity .05s; }
-  #flash.on { opacity:.1; }
+/* titlebar cursor */
+.photo-card.mode-float .w95-bar { cursor:default; }
+.photo-card.mode-static .w95-bar { cursor:grab; }
+.photo-card.mode-static .w95-bar.dragging { cursor:grabbing; }
 
-  /* ── COUNTER ── */
-  #counter {
-    position:fixed; top:12px; right:16px; z-index:950;
-    font-family:'Courier New',monospace; font-size:11px; color:rgba(255,255,255,0.4);
-  }
-  #counter b { color:#fff; }
+/* resize handles — visible only in static mode */
+.rh {
+  position:absolute; z-index:20;
+  display:none; /* hidden by default, shown in static mode via JS */
+}
+.photo-card.mode-static .rh { display:block; }
+.rh-n  { top:-5px;  left:6px;   right:6px;  height:10px; cursor:n-resize;  }
+.rh-s  { bottom:-5px; left:6px; right:6px;  height:10px; cursor:s-resize;  }
+.rh-w  { left:-5px; top:6px;    bottom:6px; width:10px;  cursor:w-resize;  }
+.rh-e  { right:-5px; top:6px;   bottom:6px; width:10px;  cursor:e-resize;  }
+.rh-nw { top:-5px;  left:-5px;  width:14px; height:14px; cursor:nw-resize; }
+.rh-ne { top:-5px;  right:-5px; width:14px; height:14px; cursor:ne-resize; }
+.rh-sw { bottom:-5px; left:-5px; width:14px; height:14px; cursor:sw-resize;}
+.rh-se { bottom:-5px; right:-5px; width:14px; height:14px; cursor:se-resize;}
 
-  /* ── CONTROL PANEL ── */
-  #ctrl-panel {
-    position:fixed; bottom:12px; left:50%; transform:translateX(-50%);
-    z-index:950;
-  }
-  .ctrl-win {
-    background:#c0c0c0;
-    border-top:2px solid #fff; border-left:2px solid #fff;
-    border-right:2px solid #404040; border-bottom:2px solid #404040;
-    box-shadow:2px 2px 0 #000;
-  }
-  .ctrl-bar {
-    background:linear-gradient(90deg,#000080,#1084d0);
-    color:#fff; padding:2px 6px; font-size:11px; font-weight:bold;
-    display:flex; align-items:center; gap:4px;
-  }
-  .ctrl-body {
-    padding:6px 10px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;
-  }
-  .cf { display:flex; align-items:center; gap:4px; font-size:11px; color:#000; white-space:nowrap; }
-  .cf input[type=number] {
-    width:52px; padding:1px 3px; background:#fff; font-family:'Courier New',monospace; font-size:11px;
-    border-top:2px solid #404040; border-left:2px solid #404040;
-    border-right:2px solid #fff; border-bottom:2px solid #fff; outline:none;
-  }
-  .cf input[type=range] {
-    width:90px; -webkit-appearance:none; appearance:none; height:4px;
-    background:#808080; border-top:1px solid #404040; border-left:1px solid #404040;
-    border-right:1px solid #fff; border-bottom:1px solid #fff; outline:none; cursor:pointer;
-  }
-  .cf input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance:none; width:11px; height:18px; background:#c0c0c0;
-    border-top:2px solid #fff; border-left:2px solid #fff;
-    border-right:2px solid #404040; border-bottom:2px solid #404040; cursor:pointer;
-  }
-  .cf input[type=range]::-moz-range-thumb {
-    width:11px; height:18px; background:#c0c0c0; border-radius:0;
-    border-top:2px solid #fff; border-left:2px solid #fff;
-    border-right:2px solid #404040; border-bottom:2px solid #404040; cursor:pointer;
-  }
-  .csep { width:1px; height:26px; background:#808080; border-right:1px solid #fff; margin:0 2px; }
-  .cbtn {
-    padding:2px 8px; background:#c0c0c0; cursor:pointer; font-family:'Courier New',monospace; font-size:11px;
-    border-top:2px solid #fff; border-left:2px solid #fff;
-    border-right:2px solid #404040; border-bottom:2px solid #404040; white-space:nowrap;
-  }
-  .cbtn:active {
-    border-top:2px solid #404040; border-left:2px solid #404040;
-    border-right:2px solid #fff; border-bottom:2px solid #fff;
-  }
+/* die */
+.photo-card.dying {
+  transition:opacity 1.2s ease, transform 1.2s ease !important;
+  opacity:0 !important; transform:scale(0.6) !important;
+  pointer-events:none !important;
+}
 
-  /* ── CONFIG OVERLAY ── */
-  #config-overlay {
-    position:fixed; inset:0; background:rgba(0,80,25,0.97);
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    gap:16px; z-index:9999; padding:32px;
-  }
-  #config-overlay.hidden { display:none; }
-  .cfg-title { font-family:'Bebas Neue',sans-serif; font-size:32px; letter-spacing:.1em; color:#fff; }
-  .cfg-sub { font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:rgba(255,255,255,.45); text-align:center; line-height:2; }
-  .cfg-input { width:100%; max-width:500px; padding:10px 12px; background:#fff; border-top:2px solid #404040; border-left:2px solid #404040; border-right:2px solid #fff; border-bottom:2px solid #fff; font-size:13px; outline:none; font-family:'Courier New',monospace; }
-  .cfg-btn { padding:10px 36px; background:#c0c0c0; border-top:2px solid #fff; border-left:2px solid #fff; border-right:2px solid #404040; border-bottom:2px solid #404040; font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:.15em; cursor:pointer; }
-  .cfg-note { font-size:11px; color:rgba(255,255,255,.3); text-align:center; }
+/* ── FLASH ── */
+#flash { position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none; z-index:4999; transition:opacity .05s; }
+#flash.on { opacity:.1; }
+
+/* ── COUNTER ── */
+#counter { position:fixed; top:10px; right:14px; z-index:9500; font-size:11px; color:rgba(255,255,255,0.35); }
+#counter b { color:#fff; }
+
+/* ── CONTROL PANEL ── */
+#ctrl-panel { position:fixed; bottom:10px; left:50%; transform:translateX(-50%); z-index:9500; }
+.ctrl-body { padding:6px 10px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.cf { display:flex; align-items:center; gap:4px; font-size:11px; color:#000; white-space:nowrap; }
+.cf input[type=number] {
+  width:50px; padding:1px 3px; background:#fff; font-family:'Courier New',monospace; font-size:11px;
+  border-top:2px solid #404040; border-left:2px solid #404040;
+  border-right:2px solid #fff; border-bottom:2px solid #fff; outline:none;
+}
+.cf input[type=range] {
+  width:80px; -webkit-appearance:none; appearance:none; height:4px; cursor:pointer;
+  background:#808080; border-top:1px solid #404040; border-left:1px solid #404040;
+  border-right:1px solid #fff; border-bottom:1px solid #fff; outline:none;
+}
+.cf input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance:none; width:11px; height:18px; background:#c0c0c0; cursor:pointer;
+  border-top:2px solid #fff; border-left:2px solid #fff;
+  border-right:2px solid #404040; border-bottom:2px solid #404040;
+}
+.cf input[type=range]::-moz-range-thumb {
+  width:11px; height:18px; background:#c0c0c0; border-radius:0; cursor:pointer;
+  border-top:2px solid #fff; border-left:2px solid #fff;
+  border-right:2px solid #404040; border-bottom:2px solid #404040;
+}
+.csep { width:1px; height:24px; background:#808080; border-right:1px solid #fff; }
+.cbtn {
+  padding:2px 8px; background:#c0c0c0; cursor:pointer; font-family:'Courier New',monospace; font-size:11px;
+  border-top:2px solid #fff; border-left:2px solid #fff;
+  border-right:2px solid #404040; border-bottom:2px solid #404040; white-space:nowrap; border:none;
+  border-top:2px solid #fff; border-left:2px solid #fff;
+  border-right:2px solid #404040; border-bottom:2px solid #404040;
+}
+.cbtn:active { border-top:2px solid #404040; border-left:2px solid #404040; border-right:2px solid #fff; border-bottom:2px solid #fff; }
+.cbtn.on { background:#000080; color:#fff; }
+
+/* ── CONFIG OVERLAY ── */
+#cfg {
+  position:fixed; inset:0; background:rgba(0,80,25,0.97);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:16px; z-index:99999; padding:32px;
+}
+#cfg.hidden { display:none; }
+.cfg-title { font-family:'Bebas Neue',sans-serif; font-size:32px; letter-spacing:.1em; color:#fff; }
+.cfg-sub { font-size:12px; text-transform:uppercase; color:rgba(255,255,255,.4); text-align:center; line-height:2; }
+.cfg-input { width:100%; max-width:500px; padding:10px 12px; background:#fff; font-size:13px; outline:none; font-family:'Courier New',monospace; border-top:2px solid #404040; border-left:2px solid #404040; border-right:2px solid #fff; border-bottom:2px solid #fff; }
+.cfg-btn { padding:10px 36px; background:#c0c0c0; font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:.15em; cursor:pointer; border-top:2px solid #fff; border-left:2px solid #fff; border-right:2px solid #404040; border-bottom:2px solid #404040; }
+.cfg-note { font-size:11px; color:rgba(255,255,255,.3); text-align:center; }
 </style>
 </head>
 <body>
 
 <!-- CONFIG -->
-<div id="config-overlay">
+<div id="cfg">
   <div class="cfg-title">CONFIGURA FIREBASE</div>
   <div class="cfg-sub">Incolla il Firebase Realtime Database URL</div>
   <input class="cfg-input" id="db-url-input" type="url" placeholder="https://nome-default-rtdb.firebaseio.com">
   <button class="cfg-btn" onclick="saveConfig()">AVVIA WALL</button>
-  <div class="cfg-note">Salvato in locale · <span style="color:rgba(255,220,0,.7);cursor:pointer" onclick="localStorage.removeItem('dj_db_url');location.reload()">reset</span></div>
+  <div class="cfg-note">Salvato · <span style="color:rgba(255,220,0,.7);cursor:pointer" onclick="localStorage.removeItem('dj_db_url');location.reload()">reset</span></div>
 </div>
 
-<!-- WAIT SCREEN (fuori dal canvas, overlay a tutto schermo) -->
+<!-- WAIT SCREEN -->
 <div id="wait-screen">
-  <div class="qr-wrap"><img id="qr-img" src="" alt="QR"></div>
+  <div style="background:#fff;padding:16px;border-top:2px solid #fff;border-left:2px solid #fff;border-right:2px solid #404040;border-bottom:2px solid #404040;box-shadow:2px 2px 0 #000;line-height:0;">
+    <img id="qr-img-wait" src="" alt="QR">
+  </div>
 </div>
 
-<!-- CANVAS (il wall vero) -->
+<!-- CANVAS -->
 <div id="canvas">
+  <!-- QR overlay (sempre visibile sopra le foto) -->
+  <div id="qr-overlay" class="hidden">
+    <div class="w95">
+      <div class="w95-bar" id="qr-drag-bar">
+        <div class="w95-bar-left"><span class="w95-dot"></span><span class="w95-title">QR Code</span></div>
+        <div class="w95-btns"><div class="w95-btn" onclick="toggleQR()">✕</div></div>
+      </div>
+      <div class="qr-box"><img id="qr-img-live" src="" alt="QR"></div>
+    </div>
+  </div>
+
   <div id="wall"></div>
-  <span id="status-msg" style="display:none"></span>
   <div id="flash"></div>
 </div>
 
@@ -193,294 +209,450 @@
 
 <!-- CONTROL PANEL -->
 <div id="ctrl-panel">
-  <div class="ctrl-win">
-    <div class="ctrl-bar">⚙ Display Properties</div>
+  <div class="w95">
+    <div class="w95-bar"><span style="padding:0 4px;font-size:11px;font-weight:bold;">⚙ Display Properties</span></div>
     <div class="ctrl-body">
+
+      <!-- foto size -->
       <div class="cf">
         <label>Foto:</label>
         <input type="range" id="sl-size" min="20" max="300" value="100">
         <input type="number" id="in-size" min="20" max="300" value="100">
         <label>%</label>
       </div>
+
       <div class="csep"></div>
+
+      <!-- canvas size -->
       <div class="cf">
-        <label>Canvas W:</label>
-        <input type="number" id="in-cw" placeholder="auto" min="400" max="7680">
-        <label>H:</label>
-        <input type="number" id="in-ch" placeholder="auto" min="300" max="4320">
+        <label>W:</label><input type="number" id="in-cw" placeholder="auto" style="width:58px;">
+        <label>H:</label><input type="number" id="in-ch" placeholder="auto" style="width:58px;">
         <label>px</label>
         <button class="cbtn" onclick="applyCanvas()">Apply</button>
       </div>
+
       <div class="csep"></div>
+
+      <!-- durata -->
       <div class="cf">
         <label>Durata:</label>
-        <input type="number" id="in-life" min="3" max="120" value="22">
+        <input type="number" id="in-life" min="3" max="300" value="22" style="width:46px;">
         <label>sec</label>
         <button class="cbtn" onclick="applyLife()">Apply</button>
       </div>
+
+      <div class="csep"></div>
+
+      <!-- float toggle -->
+      <button class="cbtn on" id="btn-float" onclick="toggleFloat()">▶ Float</button>
+
+      <div class="csep"></div>
+
+      <!-- QR toggle + size -->
+      <div class="cf">
+        <button class="cbtn" id="btn-qr" onclick="toggleQR()">QR</button>
+        <input type="range" id="sl-qr" min="60" max="300" value="120" title="Dimensione QR">
+        <label id="qr-size-label" style="min-width:32px;">120</label>
+      </div>
+
     </div>
   </div>
 </div>
 
 <script>
-// ─── CONFIG ──────────────────────────────────────────────
-var PHOTO_LIFE   = 22000;
-var MAX_CARDS    = 14;
-var BASE_W       = 170;   // larghezza base card in px (a 100%)
-var photoScale   = 1.0;   // scala corrente (da slider)
-var cards        = [];
-var total        = 0;
-var firstPhoto   = true;
-var seenKeys     = {};
+// ═══════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════
+var PHOTO_LIFE = 22000;
+var MAX_CARDS  = 20;
+var BASE_W     = 170;
+var photoScale = 1.0;
+var floatMode  = true;
+var qrVisible  = false;
+var qrSize     = 120;
+var cards      = [];
+var total      = 0;
+var firstPhoto = true;
+var seenKeys   = {};
 
-// ─── CANVAS SETUP ────────────────────────────────────────
 var canvasEl = document.getElementById('canvas');
 var wallEl   = document.getElementById('wall');
+var flashEl  = document.getElementById('flash');
+var waitEl   = document.getElementById('wait-screen');
+var countEl  = document.getElementById('count');
 
-// Default: riempi la finestra del browser
+// ═══════════════════════════════════════════════════
+// CANVAS SIZE
+// ═══════════════════════════════════════════════════
 function setCanvasSize(w, h) {
   canvasEl.style.width  = (w || window.innerWidth)  + 'px';
   canvasEl.style.height = (h || window.innerHeight) + 'px';
 }
 setCanvasSize();
 window.addEventListener('resize', function() {
-  var cw = parseInt(document.getElementById('in-cw').value) || 0;
-  var ch = parseInt(document.getElementById('in-ch').value) || 0;
-  if (!cw && !ch) setCanvasSize();
+  var cw = parseInt(document.getElementById('in-cw').value)||0;
+  if (!cw) setCanvasSize();
 });
-
 function applyCanvas() {
-  var cw = parseInt(document.getElementById('in-cw').value) || 0;
-  var ch = parseInt(document.getElementById('in-ch').value) || 0;
-  setCanvasSize(cw || null, ch || null);
+  var w = parseInt(document.getElementById('in-cw').value)||0;
+  var h = parseInt(document.getElementById('in-ch').value)||0;
+  setCanvasSize(w||null, h||null);
 }
-
 function applyLife() {
-  var v = parseInt(document.getElementById('in-life').value) || 22;
-  PHOTO_LIFE = Math.max(3, v) * 1000;
+  PHOTO_LIFE = Math.max(3, parseInt(document.getElementById('in-life').value)||22) * 1000;
 }
 
-// ─── SLIDER ──────────────────────────────────────────────
+// ═══════════════════════════════════════════════════
+// SCALE SLIDER
+// ═══════════════════════════════════════════════════
 var slSize = document.getElementById('sl-size');
 var inSize = document.getElementById('in-size');
+function applyScale(v) {
+  v = Math.min(300, Math.max(20, parseInt(v)||100));
+  photoScale = v / 100;
+  slSize.value = v; inSize.value = v;
+}
+slSize.addEventListener('input',   function(){ applyScale(this.value); });
+inSize.addEventListener('change',  function(){ applyScale(this.value); });
+inSize.addEventListener('keydown', function(e){ if(e.key==='Enter') applyScale(this.value); });
 
-function applyScale(val) {
-  val = Math.min(300, Math.max(20, parseInt(val) || 100));
-  photoScale = val / 100;
-  slSize.value = val;
-  inSize.value = val;
-  // Aggiorna tutte le card esistenti — centrato perché transform-origin:center center
+// ═══════════════════════════════════════════════════
+// FLOAT TOGGLE
+// ═══════════════════════════════════════════════════
+var btnFloat = document.getElementById('btn-float');
+function toggleFloat() {
+  floatMode = !floatMode;
+  btnFloat.textContent = floatMode ? '▶ Float' : '▐▐ Float';
+  btnFloat.classList.toggle('on', floatMode);
   cards.forEach(function(c) {
-    if (!c.el.classList.contains('dying')) {
-      c.el.style.transform = 'scale(' + photoScale + ')';
+    if (c.dying) return;
+    c.el.classList.toggle('mode-float', floatMode);
+    c.el.classList.toggle('mode-static', !floatMode);
+    if (floatMode && c.vx === 0 && c.vy === 0) {
+      var a = Math.random()*Math.PI*2;
+      c.vx = Math.cos(a)*0.9; c.vy = Math.sin(a)*0.9;
     }
   });
 }
 
-slSize.addEventListener('input',  function() { applyScale(this.value); });
-inSize.addEventListener('change', function() { applyScale(this.value); });
-inSize.addEventListener('keydown', function(e) { if (e.key==='Enter') applyScale(this.value); });
+// ═══════════════════════════════════════════════════
+// QR OVERLAY — toggle, size, drag
+// ═══════════════════════════════════════════════════
+var qrOverlay  = document.getElementById('qr-overlay');
+var qrImgLive  = document.getElementById('qr-img-live');
+var btnQR      = document.getElementById('btn-qr');
+var slQR       = document.getElementById('sl-qr');
+var qrLabel    = document.getElementById('qr-size-label');
 
-// ─── FIREBASE CONFIG ─────────────────────────────────────
-var saved = localStorage.getItem('dj_db_url');
-if (saved) {
-  document.getElementById('config-overlay').classList.add('hidden');
-  startWall(saved);
+function setQRSize(sz) {
+  qrSize = sz;
+  slQR.value = sz;
+  qrLabel.textContent = sz;
+  qrImgLive.style.width  = sz + 'px';
+  qrImgLive.style.height = sz + 'px';
+}
+setQRSize(qrSize);
+
+slQR.addEventListener('input', function(){ setQRSize(parseInt(this.value)); });
+
+function toggleQR() {
+  qrVisible = !qrVisible;
+  qrOverlay.classList.toggle('hidden', !qrVisible);
+  btnQR.classList.toggle('on', qrVisible);
 }
 
+// Make QR overlay draggable inside canvas
+(function(){
+  var bar = document.getElementById('qr-drag-bar');
+  var ox=0, oy=0;
+  bar.addEventListener('mousedown', function(e){
+    if (e.target.classList.contains('w95-btn')) return;
+    e.preventDefault();
+    var rect = canvasEl.getBoundingClientRect();
+    var elRect = qrOverlay.getBoundingClientRect();
+    ox = e.clientX - elRect.left;
+    oy = e.clientY - elRect.top;
+    function move(ev){
+      var nx = ev.clientX - rect.left - ox;
+      var ny = ev.clientY - rect.top  - oy;
+      nx = Math.max(0, Math.min(nx, canvasEl.offsetWidth  - qrOverlay.offsetWidth));
+      ny = Math.max(0, Math.min(ny, canvasEl.offsetHeight - qrOverlay.offsetHeight));
+      qrOverlay.style.left = nx+'px';
+      qrOverlay.style.top  = ny+'px';
+      qrOverlay.style.bottom = 'auto';
+    }
+    function up(){ document.removeEventListener('mousemove',move); document.removeEventListener('mouseup',up); }
+    document.addEventListener('mousemove', move);
+    document.addEventListener('mouseup', up);
+  });
+})();
+
+// ═══════════════════════════════════════════════════
+// FIREBASE CONFIG
+// ═══════════════════════════════════════════════════
+var saved = localStorage.getItem('dj_db_url');
+if (saved) { document.getElementById('cfg').classList.add('hidden'); startWall(saved); }
+
 function saveConfig() {
-  var val = document.getElementById('db-url-input').value.trim().replace(/\/$/, '');
+  var val = document.getElementById('db-url-input').value.trim().replace(/\/$/,'');
   if (!val.startsWith('https://')) { alert('URL non valido'); return; }
   localStorage.setItem('dj_db_url', val);
-  document.getElementById('config-overlay').classList.add('hidden');
+  document.getElementById('cfg').classList.add('hidden');
   startWall(val);
 }
 
 function startWall(dbUrl) {
-  var base = location.href.replace(/wall\.html.*$/, '');
+  var base   = location.href.replace(/wall\.html.*$/, '');
   var camUrl = base + 'camera.html?db=' + encodeURIComponent(dbUrl);
-  var qr = document.getElementById('qr-img');
-  qr.src = 'https://api.qrserver.com/v1/create-qr-code/?size=500x500&margin=10&data=' + encodeURIComponent(camUrl);
-  qr.onerror = function() { qr.src = 'https://quickchart.io/qr?size=500&text=' + encodeURIComponent(camUrl); };
+  var qrSrc  = 'https://api.qrserver.com/v1/create-qr-code/?size=500x500&margin=10&data=' + encodeURIComponent(camUrl);
+  document.getElementById('qr-img-wait').src = qrSrc;
+  document.getElementById('qr-img-wait').onerror = function(){
+    this.src = 'https://quickchart.io/qr?size=500&text=' + encodeURIComponent(camUrl);
+  };
+  qrImgLive.src = qrSrc;
   listenPhotos(dbUrl);
 }
 
-// ─── FIREBASE POLLING ────────────────────────────────────
-function setStatus(msg, col) {
-  var el = document.getElementById('status-msg');
-  if (el) { el.textContent = msg; el.style.color = col || 'rgba(0,0,0,0.4)'; }
-}
-
+// ═══════════════════════════════════════════════════
+// FIREBASE POLLING
+// ═══════════════════════════════════════════════════
 function listenPhotos(dbUrl) {
-  setStatus('Connesso · in attesa di foto…');
   setInterval(function() {
     fetch(dbUrl + '/photos.json')
-      .then(function(r) {
-        if (r.status===401||r.status===403) { setStatus('⚠ Accesso negato — controlla le regole Firebase','#900'); return null; }
-        if (!r.ok) { setStatus('Errore HTTP '+r.status,'#900'); return null; }
-        return r.json();
-      })
+      .then(function(r){ return r.ok ? r.json() : null; })
       .then(function(data) {
         if (!data) return;
         Object.keys(data).forEach(function(key) {
           if (data[key] && !seenKeys[key]) {
             seenKeys[key] = true;
             addPhoto(data[key].dataUrl);
-            fetch(dbUrl + '/photos/' + key + '.json', { method:'DELETE' });
+            fetch(dbUrl+'/photos/'+key+'.json', {method:'DELETE'});
           }
         });
       })
-      .catch(function(e) { setStatus('Errore: '+e.message,'#900'); });
+      .catch(function(){});
   }, 1500);
 }
 
-// ─── HERO → SPAWN ────────────────────────────────────────
-// La card viene creata subito al centro (grande), poi si anima
-// verso la posizione finale rimpicciolendosi con CSS transition.
-var flashEl = document.getElementById('flash');
-var waitEl  = document.getElementById('wait-screen');
-var countEl = document.getElementById('count');
-
+// ═══════════════════════════════════════════════════
+// ADD PHOTO — hero animation → float/static
+// ═══════════════════════════════════════════════════
 function addPhoto(dataUrl) {
   if (!dataUrl) return;
+
+  // Hide wait screen on first photo
   if (firstPhoto) { waitEl.classList.add('hidden'); firstPhoto = false; }
 
+  // Flash
   flashEl.classList.add('on');
-  setTimeout(function() { flashEl.classList.remove('on'); }, 100);
+  setTimeout(function(){ flashEl.classList.remove('on'); }, 100);
 
+  // Remove oldest if over limit
   if (cards.length >= MAX_CARDS) removeCard(cards[0]);
 
-  var WW = canvasEl.offsetWidth;
-  var HH = canvasEl.offsetHeight;
-  var PANEL_H = 60;
-
-  // Dimensione card in px (base * slider)
+  var WW = canvasEl.offsetWidth, HH = canvasEl.offsetHeight;
   var cardW = Math.round(BASE_W * photoScale);
-  var cardH = Math.round(cardW * (1.0 + Math.random() * 0.5) + 20); // +20 titlebar
+  var cardH = Math.round(cardW * (1.1 + Math.random()*0.4) + 20);
 
-  // Posizione finale casuale
-  var finalX = Math.random() * (WW - cardW - 10) + 5;
-  var finalY = Math.random() * (HH - cardH - PANEL_H - 5) + 5;
-
-  // Posizione iniziale = centro canvas, scalata grande
-  var heroScale = Math.min(WW, HH) * 0.55 / cardW; // quanto dev'essere grande al centro
+  // Hero: appears big at center
+  var heroScale = Math.min(WW, HH) * 0.52 / cardW;
   var startX = (WW - cardW) / 2;
   var startY = (HH - cardH) / 2;
 
-  var num = String(total + 1).padStart(3, '0');
+  // Final random position (avoid control panel at bottom)
+  var finalX = Math.random() * (WW - cardW - 10) + 5;
+  var finalY = Math.random() * (HH - cardH - 70) + 5;
 
+  var speed = 0.7 + Math.random()*1.1;
+  var angle = Math.random() * Math.PI * 2;
+  var num   = String(total+1).padStart(3,'0');
+
+  // Build element
   var el = document.createElement('div');
-  el.className = 'photo-card';
-  // Posizione iniziale = centro; transform = grande
+  el.className = 'photo-card ' + (floatMode ? 'mode-float' : 'mode-static');
   el.style.cssText = [
-    'left:' + startX + 'px',
-    'top:' + startY + 'px',
-    'width:' + cardW + 'px',
-    'height:' + cardH + 'px',
-    'transform:scale(' + heroScale + ')',
-    'z-index:' + (100 + total),
-    // transizione per l'animazione hero→small
-    'transition:transform 0.7s cubic-bezier(.4,0,.2,1), left 0.7s cubic-bezier(.4,0,.2,1), top 0.7s cubic-bezier(.4,0,.2,1)',
+    'left:'+startX+'px', 'top:'+startY+'px',
+    'width:'+cardW+'px', 'height:'+cardH+'px',
+    'z-index:'+(200+total),
+    'transform:scale('+heroScale+')',
+    'transition:left .7s cubic-bezier(.4,0,.2,1),top .7s cubic-bezier(.4,0,.2,1),transform .7s cubic-bezier(.4,0,.2,1)'
   ].join(';');
 
   el.innerHTML =
-    '<div class="win95" style="width:100%;height:100%;display:flex;flex-direction:column;">' +
-      '<div class="win95-bar" style="flex-shrink:0;">' +
-        '<div class="win95-bar-left"><span class="win95-dot"></span><span>foto_' + num + '.jpg</span></div>' +
-        '<div class="win95-btns"><div class="win95-btn">_</div><div class="win95-btn">□</div><div class="win95-btn">✕</div></div>' +
+    '<div class="w95">' +
+      '<div class="w95-bar">' +
+        '<div class="w95-bar-left"><span class="w95-dot"></span><span class="w95-title">foto_'+num+'.jpg</span></div>' +
+        '<div class="w95-btns">' +
+          '<div class="w95-btn btn-min">_</div>' +
+          '<div class="w95-btn btn-max">□</div>' +
+          '<div class="w95-btn btn-close">✕</div>' +
+        '</div>' +
       '</div>' +
-      '<div class="win95-body" style="flex:1;">' +
-        '<img src="' + dataUrl + '">' +
-      '</div>' +
-    '</div>';
+      '<div class="w95-body"><img src="'+dataUrl+'" draggable="false"></div>' +
+    '</div>' +
+    // Resize handles
+    '<div class="rh rh-n"  data-dir="n"></div>'  +
+    '<div class="rh rh-s"  data-dir="s"></div>'  +
+    '<div class="rh rh-w"  data-dir="w"></div>'  +
+    '<div class="rh rh-e"  data-dir="e"></div>'  +
+    '<div class="rh rh-nw" data-dir="nw"></div>' +
+    '<div class="rh rh-ne" data-dir="ne"></div>' +
+    '<div class="rh rh-sw" data-dir="sw"></div>' +
+    '<div class="rh rh-se" data-dir="se"></div>';
 
   wallEl.appendChild(el);
-  total++;
-  countEl.textContent = total;
-
-  // Velocità per il bounce
-  var speed = 0.7 + Math.random() * 1.1;
-  var angle = Math.random() * Math.PI * 2;
 
   var obj = {
-    el: el,
-    x: startX, y: startY,
-    vx: Math.cos(angle) * speed,
-    vy: Math.sin(angle) * speed,
-    w: cardW, h: cardH,
-    animating: true   // true = in fase hero, non fluttua ancora
+    el: el, x: startX, y: startY, w: cardW, h: cardH,
+    vx: Math.cos(angle)*speed, vy: Math.sin(angle)*speed,
+    animating: true, dying: false
   };
   cards.push(obj);
+  total++; countEl.textContent = total;
 
-  // Dopo 1 frame, anima verso posizione finale e scala normale
-  requestAnimationFrame(function() {
-    requestAnimationFrame(function() {
-      el.style.left      = finalX + 'px';
-      el.style.top       = finalY + 'px';
-      el.style.transform = 'scale(' + photoScale + ')';
-      obj.x = finalX;
-      obj.y = finalY;
+  // ── CLOSE BUTTON ──
+  el.querySelector('.btn-close').addEventListener('mousedown', function(e) {
+    e.stopPropagation();
+    removeCard(obj);
+  });
 
-      // Quando l'animazione finisce, passa al controllo JS (bounce)
-      setTimeout(function() {
-        obj.animating = false;
-        // Rimuovi la transition position — da qui la gestisce il loop
-        el.style.transition = 'transform 0.35s ease';
-      }, 750);
+  // ── TITLEBAR DRAG (static mode only) ──
+  el.querySelector('.w95-bar').addEventListener('mousedown', function(e) {
+    if (floatMode) return;
+    if (e.target.closest('.w95-btns')) return;
+    e.preventDefault();
+    startDrag(e, obj);
+  });
+
+  // ── RESIZE HANDLES (static mode only) ──
+  el.querySelectorAll('.rh').forEach(function(rh) {
+    rh.addEventListener('mousedown', function(e) {
+      if (floatMode) return;
+      e.preventDefault();
+      e.stopPropagation();
+      startResize(e, obj, rh.dataset.dir);
     });
   });
 
-  // Morte programmata
-  setTimeout(function() { removeCard(obj); }, PHOTO_LIFE);
+  // ── HERO → FINAL POSITION ──
+  requestAnimationFrame(function(){ requestAnimationFrame(function(){
+    el.style.left      = finalX + 'px';
+    el.style.top       = finalY + 'px';
+    el.style.transform = 'scale(1)';
+    obj.x = finalX; obj.y = finalY;
+    setTimeout(function(){
+      obj.animating = false;
+      el.style.transition = 'none';
+    }, 750);
+  }); });
+
+  // Auto-remove after PHOTO_LIFE
+  setTimeout(function(){ removeCard(obj); }, PHOTO_LIFE);
 }
 
+// ═══════════════════════════════════════════════════
+// REMOVE CARD
+// ═══════════════════════════════════════════════════
 function removeCard(obj) {
   var idx = cards.indexOf(obj);
   if (idx === -1) return;
   cards.splice(idx, 1);
-  obj.animating = true; // blocca il loop
-  obj.el.style.transition = 'opacity 1.4s ease, transform 1.4s ease';
-  obj.el.style.opacity = '0';
-  obj.el.style.transform = 'scale(0.55)';
-  setTimeout(function() { if (obj.el.parentNode) obj.el.parentNode.removeChild(obj.el); }, 1500);
+  obj.dying = true; obj.animating = true;
+  obj.el.classList.add('dying');
+  setTimeout(function(){ if(obj.el.parentNode) obj.el.parentNode.removeChild(obj.el); }, 1300);
 }
 
-// ─── ANIMATION LOOP (bounce) ─────────────────────────────
-function loop() {
-  var WW = canvasEl.offsetWidth;
-  var HH = canvasEl.offsetHeight;
-  var PAD = 60; // pannello in basso
+// ═══════════════════════════════════════════════════
+// DRAG (static mode)
+// ═══════════════════════════════════════════════════
+function startDrag(e, obj) {
+  var canvRect = canvasEl.getBoundingClientRect();
+  var ox = e.clientX - canvRect.left - obj.x;
+  var oy = e.clientY - canvRect.top  - obj.y;
+  var origZ = obj.el.style.zIndex;
+  obj.el.style.zIndex = 9999;
+  obj.el.querySelector('.w95-bar').classList.add('dragging');
 
-  for (var i = 0; i < cards.length; i++) {
-    var c = cards[i];
-    if (c.animating) continue;
-
-    c.x += c.vx;
-    c.y += c.vy;
-
-    // Bordi
-    if (c.x <= 0)            { c.x = 0;          c.vx =  Math.abs(c.vx); }
-    if (c.x + c.w >= WW)     { c.x = WW - c.w;   c.vx = -Math.abs(c.vx); }
-    if (c.y <= 0)            { c.y = 0;          c.vy =  Math.abs(c.vy); }
-    if (c.y + c.h >= HH-PAD) { c.y = HH-PAD-c.h; c.vy = -Math.abs(c.vy); }
-
-    // Collisioni tra card
-    for (var j = i + 1; j < cards.length; j++) {
-      var d = cards[j];
-      if (d.animating) continue;
-      var ox = Math.min(c.x+c.w, d.x+d.w) - Math.max(c.x, d.x);
-      var oy = Math.min(c.y+c.h, d.y+d.h) - Math.max(c.y, d.y);
-      if (ox > 0 && oy > 0) {
-        if (ox < oy) { var t=c.vx; c.vx=d.vx; d.vx=t; c.x+=c.vx; d.x+=d.vx; }
-        else         { var t=c.vy; c.vy=d.vy; d.vy=t; c.y+=c.vy; d.y+=d.vy; }
-      }
-    }
-
-    // Aggiorna posizione senza transition (già rimossa dopo hero)
-    c.el.style.left = c.x + 'px';
-    c.el.style.top  = c.y + 'px';
+  function onMove(ev) {
+    obj.x = ev.clientX - canvRect.left - ox;
+    obj.y = ev.clientY - canvRect.top  - oy;
+    obj.el.style.left = obj.x + 'px';
+    obj.el.style.top  = obj.y + 'px';
   }
+  function onUp() {
+    obj.el.style.zIndex = origZ;
+    obj.el.querySelector('.w95-bar').classList.remove('dragging');
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+  }
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+}
 
+// ═══════════════════════════════════════════════════
+// RESIZE (static mode)
+// ═══════════════════════════════════════════════════
+var MIN_W = 80, MIN_H = 60;
+
+function startResize(e, obj, dir) {
+  var sx = e.clientX, sy = e.clientY;
+  var ox = obj.x, oy = obj.y, ow = obj.w, oh = obj.h;
+
+  function onMove(ev) {
+    var dx = ev.clientX - sx, dy = ev.clientY - sy;
+    var nx = ox, ny = oy, nw = ow, nh = oh;
+    if (dir.includes('e'))  nw = Math.max(MIN_W, ow + dx);
+    if (dir.includes('s'))  nh = Math.max(MIN_H, oh + dy);
+    if (dir.includes('w')) { nw = Math.max(MIN_W, ow - dx); nx = ox + ow - nw; }
+    if (dir.includes('n')) { nh = Math.max(MIN_H, oh - dy); ny = oy + oh - nh; }
+    obj.x=nx; obj.y=ny; obj.w=nw; obj.h=nh;
+    obj.el.style.left=nx+'px'; obj.el.style.top=ny+'px';
+    obj.el.style.width=nw+'px'; obj.el.style.height=nh+'px';
+  }
+  function onUp() {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+  }
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+}
+
+// ═══════════════════════════════════════════════════
+// BOUNCE LOOP
+// ═══════════════════════════════════════════════════
+function loop() {
+  if (floatMode) {
+    var WW = canvasEl.offsetWidth;
+    var HH = canvasEl.offsetHeight;
+    var PAD = 70;
+
+    for (var i = 0; i < cards.length; i++) {
+      var c = cards[i];
+      if (c.animating || c.dying) continue;
+
+      c.x += c.vx; c.y += c.vy;
+
+      if (c.x <= 0)            { c.x = 0;            c.vx =  Math.abs(c.vx); }
+      if (c.x + c.w >= WW)     { c.x = WW - c.w;     c.vx = -Math.abs(c.vx); }
+      if (c.y <= 0)            { c.y = 0;            c.vy =  Math.abs(c.vy); }
+      if (c.y + c.h >= HH-PAD) { c.y = HH-PAD - c.h; c.vy = -Math.abs(c.vy); }
+
+      // Card-to-card collisions
+      for (var j = i+1; j < cards.length; j++) {
+        var d = cards[j];
+        if (d.animating || d.dying) continue;
+        var ox = Math.min(c.x+c.w, d.x+d.w) - Math.max(c.x, d.x);
+        var oy = Math.min(c.y+c.h, d.y+d.h) - Math.max(c.y, d.y);
+        if (ox > 0 && oy > 0) {
+          if (ox < oy) { var t=c.vx; c.vx=d.vx; d.vx=t; c.x+=c.vx; d.x+=d.vx; }
+          else         { var t=c.vy; c.vy=d.vy; d.vy=t; c.y+=c.vy; d.y+=d.vy; }
+        }
+      }
+
+      c.el.style.left = c.x + 'px';
+      c.el.style.top  = c.y + 'px';
+    }
+  }
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
